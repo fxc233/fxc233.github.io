@@ -27,14 +27,14 @@
 <meta property="og:site_name" content="fxc233&#39;s blog">
 <meta property="og:description" content="前言这个RCE漏洞利用链的实现是由几个逻辑洞的结合而导致的，这几天我花了一些时间复现了一遍，在此记录一下。 固件解压我下载的是RV345 v1.0.03.24，从官网下载到压缩包解压之后可以看到它的rootfs是ubi格式的img。之前我都是使用kali里的 binwalk 对其进行解压可以直接得到解压之后的文件系统。但是由于前几天我的虚拟机坏了，不得不进行重装，但是我还没有装 kali。故找了一">
 <meta property="og:locale" content="en_US">
-<meta property="og:image" content="https://fxc233.github.io/%5Cimg%5CPwn2Own-Austin-2021-Cisco-Rv34x-RCE%5C1.png">
-<meta property="og:image" content="https://fxc233.github.io/%5Cimg%5CPwn2Own-Austin-2021-Cisco-Rv34x-RCE%5C2.png">
-<meta property="og:image" content="https://fxc233.github.io/%5Cimg%5CPwn2Own-Austin-2021-Cisco-Rv34x-RCE%5C3.png">
+<meta property="og:image" content="https://fxc233.github.io/img/Pwn2Own-Austin-2021-Cisco-Rv34x-RCE/1.png">
+<meta property="og:image" content="https://fxc233.github.io/img/Pwn2Own-Austin-2021-Cisco-Rv34x-RCE/2.png">
+<meta property="og:image" content="https://fxc233.github.io/img/Pwn2Own-Austin-2021-Cisco-Rv34x-RCE/3.png">
 <meta property="article:published_time" content="2023-11-06T06:16:09.000Z">
-<meta property="article:modified_time" content="2023-11-06T07:03:24.697Z">
+<meta property="article:modified_time" content="2023-11-06T09:36:40.294Z">
 <meta property="article:author" content="fxc233">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://fxc233.github.io/%5Cimg%5CPwn2Own-Austin-2021-Cisco-Rv34x-RCE%5C1.png">
+<meta name="twitter:image" content="https://fxc233.github.io/img/Pwn2Own-Austin-2021-Cisco-Rv34x-RCE/1.png">
 
 <link rel="canonical" href="https://fxc233.github.io/2023/11/06/Pwn2Own-Austin-2021-Cisco-Rv34x-RCE/">
 
@@ -185,7 +185,7 @@
               <span class="post-meta-item-text">Posted on</span>
               
 
-              <time title="Created: 2023-11-06 14:16:09 / Modified: 15:03:24" itemprop="dateCreated datePublished" datetime="2023-11-06T14:16:09+08:00">2023-11-06</time>
+              <time title="Created: 2023-11-06 14:16:09 / Modified: 17:36:40" itemprop="dateCreated datePublished" datetime="2023-11-06T14:16:09+08:00">2023-11-06</time>
             </span>
 
           
@@ -223,13 +223,13 @@
 
 <p>从上述文件中我们可以知道**&#x2F;form-file-upload<strong>它对应的后端处理程序是</strong>&#x2F;www&#x2F;cgi-bin&#x2F;upload.cgi<strong>。因此我们可以无条件访问</strong>upload.cgi**。</p>
 <p>同时上述配置文件中我们可以看到检查了**&#x2F;tmp&#x2F;websession&#x2F;token&#x2F;$cookie_sessionid<strong>文件是否存在。但是存在缺陷，就是这里的</strong>$cookie_sessionid<strong>是用户在</strong>http<strong>请求中传进去的一个值，它并没有检查是否存在</strong>..&#x2F;..&#x2F;<strong>，也就是说我们可以通过跨目录来导致授权绕过。如：我们可以传递</strong>..&#x2F;..&#x2F;..&#x2F;etc&#x2F;firmware_version**。</p>
-<p><img src="/%5Cimg%5CPwn2Own-Austin-2021-Cisco-Rv34x-RCE%5C1.png"></p>
+<p><img src="/img/Pwn2Own-Austin-2021-Cisco-Rv34x-RCE/1.png"></p>
 <p>同时也可以看到在<strong>upload.cgi</strong>里对<strong>sessionid&#x3D;<strong>进行了检查，限制了它的字符，但是并没有考虑到传多个</strong>sessionid&#x3D;<strong>的情况。因为这里的</strong>sessionid&#x3D;<strong>是遍历</strong>HTTP_COOKIE</strong>并且取出它最后一个<strong>sessionid&#x3D;<strong>作为实际的</strong>sessionid&#x3D;<strong>使用，所以我们可以传两个</strong>sessionid&#x3D;<strong>。前一个用来绕过</strong>web.upload.conf</strong>里的判断，后一个当作正常的数据用来通过<strong>upload.cgi</strong>的判断。这样也可以实现无条件访问<strong>upload.cgi</strong>。</p>
 <p>我们接着看<strong>upload.cgi</strong></p>
-<p><img src="/%5Cimg%5CPwn2Own-Austin-2021-Cisco-Rv34x-RCE%5C2.png"></p>
+<p><img src="/img/Pwn2Own-Austin-2021-Cisco-Rv34x-RCE/2.png"></p>
 <p>传入适当的参数可以使得我们有能力任意文件移动到**&#x2F;tmp&#x2F;www<strong>下，通过这两个漏洞我们也可以伪造出一个</strong>session**。</p>
 <h4 id="CVE-2022-20707-Command-Injection"><a href="#CVE-2022-20707-Command-Injection" class="headerlink" title="CVE-2022-20707 Command Injection"></a>CVE-2022-20707 Command Injection</h4><p>我们继续查看<strong>upload.cgi</strong>。</p>
-<p><img src="/%5Cimg%5CPwn2Own-Austin-2021-Cisco-Rv34x-RCE%5C3.png"></p>
+<p><img src="/img/Pwn2Own-Austin-2021-Cisco-Rv34x-RCE/3.png"></p>
 <p>这个漏洞可以使得任意命令执行。</p>
 <h3 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h3><p><a target="_blank" rel="noopener" href="https://bestwing.me/Pwning%20a%20Cisco%20RV340%20%20%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90%EF%BC%88CVE-2022-20705%20%E5%92%8C%20CVE-2022-20707.html">https://bestwing.me/Pwning%20a%20Cisco%20RV340%20%20%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90%EF%BC%88CVE-2022-20705%20%E5%92%8C%20CVE-2022-20707.html</a></p>
 <p><a target="_blank" rel="noopener" href="https://blog.relyze.com/2022/04/pwning-cisco-rv340-with-4-bug-chain.html">https://blog.relyze.com/2022/04/pwning-cisco-rv340-with-4-bug-chain.html</a></p>

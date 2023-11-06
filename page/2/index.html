@@ -177,7 +177,7 @@
               <span class="post-meta-item-text">Posted on</span>
               
 
-              <time title="Created: 2023-11-06 14:10:23 / Modified: 15:24:40" itemprop="dateCreated datePublished" datetime="2023-11-06T14:10:23+08:00">2023-11-06</time>
+              <time title="Created: 2023-11-06 14:10:23 / Modified: 17:39:32" itemprop="dateCreated datePublished" datetime="2023-11-06T14:10:23+08:00">2023-11-06</time>
             </span>
 
           
@@ -194,21 +194,21 @@
           <h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>文章首发：<a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s?__biz=MzIzMTc1MjExOQ==&mid=2247508121&idx=1&sn=e34f59e53a1394600c7e768fcbf237f9&chksm=e89d8841dfea0157a63c1a15213306739f936f3b63aa8e32ae6657a87934aec82d60bfe046b8&cur_album_id=1690922801836113920&scene=189#wechat_redirect">https://mp.weixin.qq.com/s?__biz=MzIzMTc1MjExOQ==&amp;mid=2247508121&amp;idx=1&amp;sn=e34f59e53a1394600c7e768fcbf237f9&amp;chksm=e89d8841dfea0157a63c1a15213306739f936f3b63aa8e32ae6657a87934aec82d60bfe046b8&amp;cur_album_id=1690922801836113920&amp;scene=189#wechat_redirect</a></p>
 <p>在看了一位师傅的关于摄像头的文章之后，我也心血来潮找了一款摄像头（某达最新款CP7）固件去挖一下练练手。</p>
 <h3 id="串口获取shell"><a href="#串口获取shell" class="headerlink" title="串口获取shell"></a>串口获取shell</h3><p>拿到摄像头拆下来之后尝试了一波串口获取<code>shell</code>。</p>
-<p><img src="/%5Cimg%5C%E6%9F%90%E6%91%84%E5%83%8F%E5%A4%B4%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E7%BB%8F%E5%8E%86%5C1.png"></p>
+<p><img src="/img/%E6%9F%90%E6%91%84%E5%83%8F%E5%A4%B4%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E7%BB%8F%E5%8E%86/1.png"></p>
 <p>但是连上之后发现这个摄像头貌似无法获得一个正常的<code>shell</code>，只能用来看回显信息。</p>
-<p><img src="/%5Cimg%5C%E6%9F%90%E6%91%84%E5%83%8F%E5%A4%B4%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E7%BB%8F%E5%8E%86%5C2.png"></p>
+<p><img src="/img/%E6%9F%90%E6%91%84%E5%83%8F%E5%A4%B4%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E7%BB%8F%E5%8E%86/2.png"></p>
 <h3 id="分析"><a href="#分析" class="headerlink" title="分析"></a>分析</h3><p>用<code>IDA</code>打开摄像头相关程序之后，可以发现和那位师傅分析的固件大同小异。那么，如果我们想要挖掘新的漏洞的话也只能从不同的角度去进行挖掘了。之前那个师傅找到的是某个类似于后门的命令执行漏洞。那么我们再去找看看能不能发现一些其他的漏洞点。</p>
 <p>首先还是绑定并监听1300端口。</p>
-<p><img src="/%5Cimg%5C%E6%9F%90%E6%91%84%E5%83%8F%E5%A4%B4%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E7%BB%8F%E5%8E%86%5C3.png"></p>
+<p><img src="/img/%E6%9F%90%E6%91%84%E5%83%8F%E5%A4%B4%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E7%BB%8F%E5%8E%86/3.png"></p>
 <p>然后等待用户连接1300端口。</p>
-<p><img src="/%5Cimg%5C%E6%9F%90%E6%91%84%E5%83%8F%E5%A4%B4%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E7%BB%8F%E5%8E%86%5C4.png"></p>
+<p><img src="/img/%E6%9F%90%E6%91%84%E5%83%8F%E5%A4%B4%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E7%BB%8F%E5%8E%86/4.png"></p>
 <p>之后获取用户端传入的内容。</p>
-<p><img src="/%5Cimg%5C%E6%9F%90%E6%91%84%E5%83%8F%E5%A4%B4%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E7%BB%8F%E5%8E%86%5C5.png"></p>
-<p><img src="/%5Cimg%5C%E6%9F%90%E6%91%84%E5%83%8F%E5%A4%B4%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E7%BB%8F%E5%8E%86%5C6.png"></p>
+<p><img src="/img/%E6%9F%90%E6%91%84%E5%83%8F%E5%A4%B4%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E7%BB%8F%E5%8E%86/5.png"></p>
+<p><img src="/img/%E6%9F%90%E6%91%84%E5%83%8F%E5%A4%B4%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E7%BB%8F%E5%8E%86/6.png"></p>
 <p>接下来会对用户的输入进行判断，并进行相应的处理。偶然发现了一个和那位师傅提出的不一样的命令执行触发点。如果匹配到的是<code>SYSTEMEX</code>这个标签，那么会进入<code>sub_14404</code>函数。</p>
-<p><img src="/%5Cimg%5C%E6%9F%90%E6%91%84%E5%83%8F%E5%A4%B4%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E7%BB%8F%E5%8E%86%5C7.png"></p>
-<p>这个函数中，会把所包含的字符串传入<code>sub_16E04</code>函数中进行操作，而这个函数里有关于<code>popen</code>的操作，因此可以达到一个命令执行。<br><img src="/%5Cimg%5C%E6%9F%90%E6%91%84%E5%83%8F%E5%A4%B4%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E7%BB%8F%E5%8E%86%5C8.png"></p>
-<p><img src="/%5Cimg%5C%E6%9F%90%E6%91%84%E5%83%8F%E5%A4%B4%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E7%BB%8F%E5%8E%86%5C9.png"></p>
+<p><img src="/img/%E6%9F%90%E6%91%84%E5%83%8F%E5%A4%B4%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E7%BB%8F%E5%8E%86/7.png"></p>
+<p>这个函数中，会把所包含的字符串传入<code>sub_16E04</code>函数中进行操作，而这个函数里有关于<code>popen</code>的操作，因此可以达到一个命令执行。<br><img src="/img/%E6%9F%90%E6%91%84%E5%83%8F%E5%A4%B4%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E7%BB%8F%E5%8E%86/8.png"></p>
+<p><img src="/img/%E6%9F%90%E6%91%84%E5%83%8F%E5%A4%B4%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E7%BB%8F%E5%8E%86/9.png"></p>
 <p><code>exp</code>这里就不贴了，感兴趣的师傅可以自行尝试。</p>
 <h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>算是在大师傅后面捡了个漏，<code>IOT</code>的一些设备依旧不是很严谨，只要认真挖挖还是能找到一些漏洞的。</p>
 

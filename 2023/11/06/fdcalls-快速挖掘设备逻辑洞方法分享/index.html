@@ -27,15 +27,15 @@
 <meta property="og:site_name" content="fxc233&#39;s blog">
 <meta property="og:description" content="前言接触iot也快有一年的时间了，一年来也挖掘了大大小小几十个洞，虽然能有些产出但是却逐渐对人工审计感到无趣和疲惫。在此之间我也尝试过通过使用污点分析，fuzz等方法去进行自动化漏洞挖掘，但总因为目标不明确而导致挖掘效果不是很好。于是就产生了写一款可以用来辅助跨文件分析危险函数的工具的想法，正好最近在看到 https:&#x2F;&#x2F;conference.hitb.org&#x2F;hitbsecconf2023ams">
 <meta property="og:locale" content="en_US">
-<meta property="og:image" content="https://fxc233.github.io/%5Cimg%5Cfdcalls-%E5%BF%AB%E9%80%9F%E6%8C%96%E6%8E%98%E8%AE%BE%E5%A4%87%E9%80%BB%E8%BE%91%E6%B4%9E%E6%96%B9%E6%B3%95%E5%88%86%E4%BA%AB%5C1.png">
-<meta property="og:image" content="https://fxc233.github.io/%5Cimg%5Cfdcalls-%E5%BF%AB%E9%80%9F%E6%8C%96%E6%8E%98%E8%AE%BE%E5%A4%87%E9%80%BB%E8%BE%91%E6%B4%9E%E6%96%B9%E6%B3%95%E5%88%86%E4%BA%AB%5C2.png">
-<meta property="og:image" content="https://fxc233.github.io/%5Cimg%5Cfdcalls-%E5%BF%AB%E9%80%9F%E6%8C%96%E6%8E%98%E8%AE%BE%E5%A4%87%E9%80%BB%E8%BE%91%E6%B4%9E%E6%96%B9%E6%B3%95%E5%88%86%E4%BA%AB%5C3.png">
-<meta property="og:image" content="https://fxc233.github.io/%5Cimg%5Cfdcalls-%E5%BF%AB%E9%80%9F%E6%8C%96%E6%8E%98%E8%AE%BE%E5%A4%87%E9%80%BB%E8%BE%91%E6%B4%9E%E6%96%B9%E6%B3%95%E5%88%86%E4%BA%AB%5C4.png">
+<meta property="og:image" content="https://fxc233.github.io/img/fdcalls-%E5%BF%AB%E9%80%9F%E6%8C%96%E6%8E%98%E8%AE%BE%E5%A4%87%E9%80%BB%E8%BE%91%E6%B4%9E%E6%96%B9%E6%B3%95%E5%88%86%E4%BA%AB/1.png">
+<meta property="og:image" content="https://fxc233.github.io/img/fdcalls-%E5%BF%AB%E9%80%9F%E6%8C%96%E6%8E%98%E8%AE%BE%E5%A4%87%E9%80%BB%E8%BE%91%E6%B4%9E%E6%96%B9%E6%B3%95%E5%88%86%E4%BA%AB/2.png">
+<meta property="og:image" content="https://fxc233.github.io/img/fdcalls-%E5%BF%AB%E9%80%9F%E6%8C%96%E6%8E%98%E8%AE%BE%E5%A4%87%E9%80%BB%E8%BE%91%E6%B4%9E%E6%96%B9%E6%B3%95%E5%88%86%E4%BA%AB/3.png">
+<meta property="og:image" content="https://fxc233.github.io/img/fdcalls-%E5%BF%AB%E9%80%9F%E6%8C%96%E6%8E%98%E8%AE%BE%E5%A4%87%E9%80%BB%E8%BE%91%E6%B4%9E%E6%96%B9%E6%B3%95%E5%88%86%E4%BA%AB/4.png">
 <meta property="article:published_time" content="2023-11-06T06:17:31.000Z">
-<meta property="article:modified_time" content="2023-11-06T06:56:38.600Z">
+<meta property="article:modified_time" content="2023-11-06T09:36:12.946Z">
 <meta property="article:author" content="fxc233">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://fxc233.github.io/%5Cimg%5Cfdcalls-%E5%BF%AB%E9%80%9F%E6%8C%96%E6%8E%98%E8%AE%BE%E5%A4%87%E9%80%BB%E8%BE%91%E6%B4%9E%E6%96%B9%E6%B3%95%E5%88%86%E4%BA%AB%5C1.png">
+<meta name="twitter:image" content="https://fxc233.github.io/img/fdcalls-%E5%BF%AB%E9%80%9F%E6%8C%96%E6%8E%98%E8%AE%BE%E5%A4%87%E9%80%BB%E8%BE%91%E6%B4%9E%E6%96%B9%E6%B3%95%E5%88%86%E4%BA%AB/1.png">
 
 <link rel="canonical" href="https://fxc233.github.io/2023/11/06/fdcalls-%E5%BF%AB%E9%80%9F%E6%8C%96%E6%8E%98%E8%AE%BE%E5%A4%87%E9%80%BB%E8%BE%91%E6%B4%9E%E6%96%B9%E6%B3%95%E5%88%86%E4%BA%AB/">
 
@@ -186,7 +186,7 @@
               <span class="post-meta-item-text">Posted on</span>
               
 
-              <time title="Created: 2023-11-06 14:17:31 / Modified: 14:56:38" itemprop="dateCreated datePublished" datetime="2023-11-06T14:17:31+08:00">2023-11-06</time>
+              <time title="Created: 2023-11-06 14:17:31 / Modified: 17:36:12" itemprop="dateCreated datePublished" datetime="2023-11-06T14:17:31+08:00">2023-11-06</time>
             </span>
 
           
@@ -204,13 +204,13 @@
 <h2 id="最常见的逻辑洞"><a href="#最常见的逻辑洞" class="headerlink" title="最常见的逻辑洞"></a>最常见的逻辑洞</h2><p>在我看来，在一些中小型厂商的设备中，最常见的逻辑洞应该是命令注入了。不仅<strong>exp</strong>简单，并且<strong>危害大</strong>，经常可以很容易实现<strong>rce</strong>。想要快速寻找到命令注入漏洞，可以从一些危险函数下手，看看这些危险函数的参数是否可以被我们用户控制。常见的危险函数如<strong>system</strong>，<strong>execve</strong>等。但是很多厂商会在自定义的动态链接库中定义自己的函数，并且在其内部调用这些危险函数。往往这些函数是最有可能被我们忽略掉的，如果在审计时可以注意到这些函数那我们挖掘到漏洞的概率也就会大大提高了。</p>
 <h2 id="如何快速进行漏洞挖掘"><a href="#如何快速进行漏洞挖掘" class="headerlink" title="如何快速进行漏洞挖掘"></a>如何快速进行漏洞挖掘</h2><p><strong>fdcalls</strong>是我编写的一款用来辅助我们寻找危险函数调用以及可能的危险函数的一款工具，已在github上开源（<a target="_blank" rel="noopener" href="https://github.com/fxc233/fdcalls%EF%BC%89%E3%80%82">https://github.com/fxc233/fdcalls）。</a></p>
 <p>接着我们就来看一下如何使用这个工具快速的发现可能的漏洞点，以及可能存在的危险函数。这款工具分为两个模式，第一个模式仅匹配目标文件可能存在命令注入漏洞的地方，并且返回漏洞点及危险函数调用链。如下图，此时我们就可以去显示的地址对是否存在漏洞做进一步的判断。当然由于时间问题，我并没有尝试测过很多不同厂商的设备，这就导致可能会在运行脚本时多出一些错误信息的提示，但是只要脚本不是中断报错，那么就还是可以正常进行分析的。当然显示出来的路径也可能会存在误报的现象。</p>
-<p><img src="/%5Cimg%5Cfdcalls-%E5%BF%AB%E9%80%9F%E6%8C%96%E6%8E%98%E8%AE%BE%E5%A4%87%E9%80%BB%E8%BE%91%E6%B4%9E%E6%96%B9%E6%B3%95%E5%88%86%E4%BA%AB%5C1.png"></p>
+<p><img src="/img/fdcalls-%E5%BF%AB%E9%80%9F%E6%8C%96%E6%8E%98%E8%AE%BE%E5%A4%87%E9%80%BB%E8%BE%91%E6%B4%9E%E6%96%B9%E6%B3%95%E5%88%86%E4%BA%AB/1.png"></p>
 <p>第二个模式会显示所有可能的危险函数。加上这个模式的原因是，因为笔者的能力有限，所以一些函数调用处可能处理的不是很好，故有一些危险函数虽然会被会被调用却没能在上面的路径当中显示出来。如下图所示，我们可以看到可能存在的危险函数以及定义他们的动态链接库。我们在模式以扫描出的路径中不能发现漏洞或者扫描不出路径时，可以去二进制文件中搜索这些函数名，如果函数存在那么也有存在漏洞的可能。</p>
-<p><img src="/%5Cimg%5Cfdcalls-%E5%BF%AB%E9%80%9F%E6%8C%96%E6%8E%98%E8%AE%BE%E5%A4%87%E9%80%BB%E8%BE%91%E6%B4%9E%E6%96%B9%E6%B3%95%E5%88%86%E4%BA%AB%5C2.png"></p>
+<p><img src="/img/fdcalls-%E5%BF%AB%E9%80%9F%E6%8C%96%E6%8E%98%E8%AE%BE%E5%A4%87%E9%80%BB%E8%BE%91%E6%B4%9E%E6%96%B9%E6%B3%95%E5%88%86%E4%BA%AB/2.png"></p>
 <h2 id="实战应用"><a href="#实战应用" class="headerlink" title="实战应用"></a>实战应用</h2><p>笔者这里就拿在<strong>github</strong>上看到某个的今年新出的<strong>cve</strong>（<a target="_blank" rel="noopener" href="https://github.com/kagehutatsu/IOT_Vulnerability/tree/main/LB-Link/WR450H/CVE-2023-26697">https://github.com/kagehutatsu/IOT_Vulnerability&#x2F;tree&#x2F;main&#x2F;LB-Link&#x2F;WR450H&#x2F;CVE-2023-26697</a>），来看一下这个工具效果。看漏洞提交报告可知，漏洞函数是**.&#x2F;lib&#x2F;libshare-0.0.26.so里的定义的bs_SetForwardingInfo**。</p>
-<p><img src="/%5Cimg%5Cfdcalls-%E5%BF%AB%E9%80%9F%E6%8C%96%E6%8E%98%E8%AE%BE%E5%A4%87%E9%80%BB%E8%BE%91%E6%B4%9E%E6%96%B9%E6%B3%95%E5%88%86%E4%BA%AB%5C3.png"></p>
+<p><img src="/img/fdcalls-%E5%BF%AB%E9%80%9F%E6%8C%96%E6%8E%98%E8%AE%BE%E5%A4%87%E9%80%BB%E8%BE%91%E6%B4%9E%E6%96%B9%E6%B3%95%E5%88%86%E4%BA%AB/3.png"></p>
 <p>我们分析的二进制文件是**.&#x2F;bin&#x2F;goahead**，尝试直接用工具扫描试试。</p>
-<p><img src="/%5Cimg%5Cfdcalls-%E5%BF%AB%E9%80%9F%E6%8C%96%E6%8E%98%E8%AE%BE%E5%A4%87%E9%80%BB%E8%BE%91%E6%B4%9E%E6%96%B9%E6%B3%95%E5%88%86%E4%BA%AB%5C4.png"></p>
+<p><img src="/img/fdcalls-%E5%BF%AB%E9%80%9F%E6%8C%96%E6%8E%98%E8%AE%BE%E5%A4%87%E9%80%BB%E8%BE%91%E6%B4%9E%E6%96%B9%E6%B3%95%E5%88%86%E4%BA%AB/4.png"></p>
 <p>很可惜我们并没能直接定位到漏洞函数调用的位置，不过好在我们能识别到存在这个危险函数，对我们漏洞挖掘还是能有一定的帮助的。</p>
 <h2 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h2><p>祝各位师傅每天都能挖到新的<strong>0day</strong>。最后如果有师傅在使用这个工具是出现了bug，欢迎师傅们在github上提issue。</p>
 <h2 id="链接"><a href="#链接" class="headerlink" title="链接"></a>链接</h2><p>项目地址：<a target="_blank" rel="noopener" href="https://github.com/fxc233/fdcalls">https://github.com/fxc233/fdcalls</a></p>

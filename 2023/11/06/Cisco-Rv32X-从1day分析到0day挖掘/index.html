@@ -27,19 +27,19 @@
 <meta property="og:site_name" content="fxc233&#39;s blog">
 <meta property="og:description" content="前言拿到一个iot设备，笔者比较喜欢先去看一下它的历史漏洞，也许可以从中得到一些启发。发现Cisco之前修补过这个系列设备的命令注入漏洞。 https:&#x2F;&#x2F;sec.cloudapps.cisco.com&#x2F;security&#x2F;center&#x2F;content&#x2F;CiscoSecurityAdvisory&#x2F;cisco-sa-rv-command-inject-BY4c5zd  1day分析因为漏洞通告中有相关">
 <meta property="og:locale" content="en_US">
-<meta property="og:image" content="https://fxc233.github.io/%5Cimg%5CCisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98%5C1.png">
-<meta property="og:image" content="https://fxc233.github.io/%5Cimg%5CCisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98%5C2.png">
-<meta property="og:image" content="https://fxc233.github.io/%5Cimg%5CCisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98%5C3.png">
-<meta property="og:image" content="https://fxc233.github.io/%5Cimg%5CCisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98%5C4.png">
-<meta property="og:image" content="https://fxc233.github.io/%5Cimg%5CCisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98%5C5.png">
-<meta property="og:image" content="https://fxc233.github.io/%5Cimg%5CCisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98%5C6.png">
-<meta property="og:image" content="https://fxc233.github.io/%5Cimg%5CCisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98%5C7.png">
-<meta property="og:image" content="https://fxc233.github.io/%5Cimg%5CCisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98%5C8.png">
+<meta property="og:image" content="https://fxc233.github.io/img/Cisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98/1.png">
+<meta property="og:image" content="https://fxc233.github.io/img/Cisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98/2.png">
+<meta property="og:image" content="https://fxc233.github.io/img/Cisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98/3.png">
+<meta property="og:image" content="https://fxc233.github.io/img/Cisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98/4.png">
+<meta property="og:image" content="https://fxc233.github.io/img/Cisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98/5.png">
+<meta property="og:image" content="https://fxc233.github.io/img/Cisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98/6.png">
+<meta property="og:image" content="https://fxc233.github.io/img/Cisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98/7.png">
+<meta property="og:image" content="https://fxc233.github.io/img/Cisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98/8.png">
 <meta property="article:published_time" content="2023-11-06T06:17:02.000Z">
-<meta property="article:modified_time" content="2023-11-06T06:52:00.803Z">
+<meta property="article:modified_time" content="2023-11-06T09:35:28.260Z">
 <meta property="article:author" content="fxc233">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://fxc233.github.io/%5Cimg%5CCisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98%5C1.png">
+<meta name="twitter:image" content="https://fxc233.github.io/img/Cisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98/1.png">
 
 <link rel="canonical" href="https://fxc233.github.io/2023/11/06/Cisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98/">
 
@@ -190,7 +190,7 @@
               <span class="post-meta-item-text">Posted on</span>
               
 
-              <time title="Created: 2023-11-06 14:17:02 / Modified: 14:52:00" itemprop="dateCreated datePublished" datetime="2023-11-06T14:17:02+08:00">2023-11-06</time>
+              <time title="Created: 2023-11-06 14:17:02 / Modified: 17:35:28" itemprop="dateCreated datePublished" datetime="2023-11-06T14:17:02+08:00">2023-11-06</time>
             </span>
 
           
@@ -206,24 +206,24 @@
       
         <h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>拿到一个iot设备，笔者比较喜欢先去看一下它的历史漏洞，也许可以从中得到一些启发。发现Cisco之前修补过这个系列设备的命令注入漏洞。</p>
 <p><a target="_blank" rel="noopener" href="https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-rv-command-inject-BY4c5zd">https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-rv-command-inject-BY4c5zd</a></p>
-<p><img src="/%5Cimg%5CCisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98%5C1.png"></p>
+<p><img src="/img/Cisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98/1.png"></p>
 <h3 id="1day分析"><a href="#1day分析" class="headerlink" title="1day分析"></a>1day分析</h3><p>因为漏洞通告中有相关固件版本，于是我就去<strong>diff</strong>了一下修补前和修补后两个固件。</p>
-<p><img src="/%5Cimg%5CCisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98%5C2.png"></p>
+<p><img src="/img/Cisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98/2.png"></p>
 <p>在<strong>ssi.cgi</strong>这个文件当中，笔者发现修复之后的固件比修复前的固件多出了两个函数，那么大概率就是通过这两个函数对存在命令注入的地方加上了检查以修复命令注入漏洞。直接看一下修复之后的固件里的<strong>NK_CHECK_LANGUAGE</strong>函数。很明显，这个函数的作用是对参数进行了判断和设置，和我们预想的一致。那么旧版本固件中存在的命令注入漏洞大概率出现在这个函数的上层函数中。</p>
-<p><img src="/%5Cimg%5CCisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98%5C3.png"></p>
+<p><img src="/img/Cisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98/3.png"></p>
 <p>通过交叉引用，我们可以很轻松地找到其上层函数是<strong>NK_UiLanguageChange</strong>，我们看一下修补前的固件中的这个函数实现了什么功能。通过函数名，大体可以判断出这个函数的作用应该是切换界面的语言。这个函数首先获取了<strong>submitStatus</strong>和<strong>changelanguage</strong>的值，经过一些判断后，把<strong>changelanguage</strong>的值作为参数传进<strong>CreateFormatFile</strong>函数中。</p>
-<p><img src="/%5Cimg%5CCisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98%5C4.png"></p>
+<p><img src="/img/Cisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98/4.png"></p>
 <p>我们继续去看一下<strong>CreateFormatFile</strong>函数。很明显，这个函数由于传进来的参数<strong>param_1</strong>没有进过任何检查，存在一个命令注入漏洞。</p>
-<p><img src="/%5Cimg%5CCisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98%5C5.png"></p>
+<p><img src="/img/Cisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98/5.png"></p>
 <p>这个漏洞的修复方式也很简单，直接用<strong>NK_CHECK_LANGUAGE</strong>函数对参数进行了过滤。</p>
 <h3 id="捕获0day"><a href="#捕获0day" class="headerlink" title="捕获0day"></a>捕获0day</h3><h4 id="漏洞分析"><a href="#漏洞分析" class="headerlink" title="漏洞分析"></a>漏洞分析</h4><p>知道这个漏洞的前因后果之后，笔者就在想这个被修复之后的固件当中是否依旧可能存在一些没有过滤或者过滤不完整的地方。就去看了一些感觉可能存在漏洞的函数，后来就找到了<strong>NK_UiSetPassword</strong>这个函数，这个函数的作用是更改用户的密码。</p>
-<p><img src="/%5Cimg%5CCisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98%5C6.png"></p>
+<p><img src="/img/Cisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98/6.png"></p>
 <p>虽然这个函数中对参数进行了一定的过滤，但是这里对于危险字符过滤的并不是很严谨，所以这里也存在一个命令注入漏洞。</p>
-<p><img src="/%5Cimg%5CCisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98%5C7.png"></p>
+<p><img src="/img/Cisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98/7.png"></p>
 <p>其它地方应该也会存在不少类似的漏洞，但是笔者这里就没有继续去看了，感兴趣的师傅也许可以去找看看。</p>
 <h4 id="Poc"><a href="#Poc" class="headerlink" title="Poc"></a>Poc</h4><p><a target="_blank" rel="noopener" href="https://github.com/fxc233/iot-vul/tree/main/Cisco/Cisco%20RV32X">https://github.com/fxc233/iot-vul/tree/main/Cisco/Cisco%20RV32X</a></p>
 <h4 id="Notices"><a href="#Notices" class="headerlink" title="Notices"></a>Notices</h4><p>目前该漏洞已经提交给了思科厂商，思科已确认了该漏洞。<a target="_blank" rel="noopener" href="https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-sb-rv01x_rv32x_rce-nzAGWWDD">https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-sb-rv01x_rv32x_rce-nzAGWWDD</a></p>
-<p><img src="/%5Cimg%5CCisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98%5C8.png"></p>
+<p><img src="/img/Cisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98/8.png"></p>
 <h3 id="文章首发"><a href="#文章首发" class="headerlink" title="文章首发"></a>文章首发</h3><p><a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s/UwsQH9nr1D4FzK2lhy_W2A">https://mp.weixin.qq.com/s/UwsQH9nr1D4FzK2lhy_W2A</a></p>
 
     </div>
