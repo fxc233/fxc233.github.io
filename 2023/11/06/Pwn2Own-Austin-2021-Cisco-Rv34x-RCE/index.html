@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.0.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"fxc233.github.io","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="前言这个RCE漏洞利用链的实现是由几个逻辑洞的结合而导致的，这几天我花了一些时间复现了一遍，在此记录一下。 固件解压我下载的是RV345 v1.0.03.24，从官网下载到压缩包解压之后可以看到它的rootfs是ubi格式的img。之前我都是使用kali里的 binwalk 对其进行解压可以直接得到解压之后的文件系统。但是由于前几天我的虚拟机坏了，不得不进行重装，但是我还没有装 kali。故找了一">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Pwn2Own-Austin-2021-Cisco-Rv34x-RCE">
+<meta property="og:url" content="https://fxc233.github.io/2023/11/06/Pwn2Own-Austin-2021-Cisco-Rv34x-RCE/index.html">
+<meta property="og:site_name" content="fxc233&#39;s blog">
+<meta property="og:description" content="前言这个RCE漏洞利用链的实现是由几个逻辑洞的结合而导致的，这几天我花了一些时间复现了一遍，在此记录一下。 固件解压我下载的是RV345 v1.0.03.24，从官网下载到压缩包解压之后可以看到它的rootfs是ubi格式的img。之前我都是使用kali里的 binwalk 对其进行解压可以直接得到解压之后的文件系统。但是由于前几天我的虚拟机坏了，不得不进行重装，但是我还没有装 kali。故找了一">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://fxc233.github.io/%5Cimg%5CPwn2Own-Austin-2021-Cisco-Rv34x-RCE%5C1.png">
+<meta property="og:image" content="https://fxc233.github.io/%5Cimg%5CPwn2Own-Austin-2021-Cisco-Rv34x-RCE%5C2.png">
+<meta property="og:image" content="https://fxc233.github.io/%5Cimg%5CPwn2Own-Austin-2021-Cisco-Rv34x-RCE%5C3.png">
+<meta property="article:published_time" content="2023-11-06T06:16:09.000Z">
+<meta property="article:modified_time" content="2023-11-06T07:03:24.697Z">
+<meta property="article:author" content="fxc233">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://fxc233.github.io/%5Cimg%5CPwn2Own-Austin-2021-Cisco-Rv34x-RCE%5C1.png">
+
+<link rel="canonical" href="https://fxc233.github.io/2023/11/06/Pwn2Own-Austin-2021-Cisco-Rv34x-RCE/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>Pwn2Own-Austin-2021-Cisco-Rv34x-RCE | fxc233's blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">fxc233's blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+  <a href="https://github.com/fxc233" class="github-corner" title="fxc233 GitHub" aria-label="fxc233 GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://fxc233.github.io/2023/11/06/Pwn2Own-Austin-2021-Cisco-Rv34x-RCE/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="fxc233">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="fxc233's blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Pwn2Own-Austin-2021-Cisco-Rv34x-RCE
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2023-11-06 14:16:09 / Modified: 15:03:24" itemprop="dateCreated datePublished" datetime="2023-11-06T14:16:09+08:00">2023-11-06</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>这个<strong>RCE漏洞利用链</strong>的实现是由几个逻辑洞的结合而导致的，这几天我花了一些时间复现了一遍，在此记录一下。</p>
+<h3 id="固件解压"><a href="#固件解压" class="headerlink" title="固件解压"></a>固件解压</h3><p>我下载的是<strong>RV345 v1.0.03.24</strong>，从官网下载到压缩包解压之后可以看到它的<strong>rootfs</strong>是<strong>ubi</strong>格式的<strong>img</strong>。之前我都是使用<strong>kali</strong>里的 binwalk 对其进行解压可以直接得到解压之后的文件系统。但是由于前几天我的虚拟机坏了，不得不进行重装，但是我还没有装 kali。故找了一下提取<strong>ubi</strong>格式的方式。在<strong>github</strong>上有一个项目：<a target="_blank" rel="noopener" href="https://github.com/nlitsme/ubidump">https://github.com/nlitsme/ubidump</a> ，通过里面的<strong>ubidump.py</strong>可以很轻松的提取出<strong>ubi</strong>格式的文件。命令如下：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python3 ubidump.py -s . 0.ubi</span><br></pre></td></tr></table></figure>
+
+<h3 id="漏洞分析"><a href="#漏洞分析" class="headerlink" title="漏洞分析"></a>漏洞分析</h3><h4 id="CVE-2022-20705-Improper-Session-Management-Vulnerability"><a href="#CVE-2022-20705-Improper-Session-Management-Vulnerability" class="headerlink" title="CVE-2022-20705 Improper Session Management Vulnerability"></a>CVE-2022-20705 Improper Session Management Vulnerability</h4><p><strong>CVE-2022-20705 Improper Session Management Vulnerability</strong>，是由于<strong>nginx</strong>的配置不当导致的。<strong>nginx</strong>的配置文件是**&#x2F;etc&#x2F;nginx&#x2F;nginx.conf**，如下</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">user</span> www-data;</span><br><span class="line"><span class="attribute">worker_processes</span>  <span class="number">4</span>;</span><br><span class="line"></span><br><span class="line"><span class="attribute">error_log</span> /dev/null;</span><br><span class="line"></span><br><span class="line"><span class="section">events</span> &#123;</span><br><span class="line">    <span class="attribute">worker_connections</span>  <span class="number">1024</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="section">http</span> &#123;</span><br><span class="line">	<span class="attribute">access_log</span> <span class="literal">off</span>;</span><br><span class="line">	<span class="comment">#error_log /var/log/nginx/error.log  error;</span></span><br><span class="line"></span><br><span class="line">	<span class="section">upstream</span> jsonrpc &#123;</span><br><span class="line">		<span class="attribute">server</span> <span class="number">127.0.0.1:9000</span>;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="section">upstream</span> rest &#123;</span><br><span class="line">		<span class="attribute">server</span> <span class="number">127.0.0.1:8008</span>;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment"># For websocket proxy server</span></span><br><span class="line">	<span class="attribute">include</span> /var/nginx/conf.d/proxy.websocket.conf;</span><br><span class="line">	<span class="attribute">include</span> /var/nginx/sites-enabled/*;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>可以发现它又加载了**&#x2F;var&#x2F;nginx&#x2F;conf.d&#x2F;proxy.websocket.conf和&#x2F;var&#x2F;nginx&#x2F;sites-enabled&#x2F;<strong>，但是固件解压出来的rootfs里的var目录有些问题，所以笔者只能根据别人的文章找一下漏洞发生的配置文件。结合</strong>rest.url.conf<strong>和</strong>proxy.conf**来看。</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">location</span> /api/ &#123;</span><br><span class="line">        <span class="attribute">proxy_pass</span> http://rest;</span><br><span class="line">        <span class="attribute">include</span> /var/nginx/conf.d/proxy.conf;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="section">location</span> /api/operations/ciscosb-file:file-copy &#123;</span><br><span class="line">	<span class="attribute">proxy_pass</span> http://rest;</span><br><span class="line">	<span class="attribute">include</span> /var/nginx/conf.d/proxy.conf;</span><br><span class="line">	<span class="attribute">proxy_read_timeout</span> <span class="number">3600</span>;</span><br><span class="line">	<span class="attribute">proxy_send_timeout</span> <span class="number">3600</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="section">location</span> /api/operations/ciscosb-file:form-file-upload &#123;</span><br><span class="line">	<span class="attribute">set</span> <span class="variable">$deny</span> <span class="number">1</span>;</span><br><span class="line"> </span><br><span class="line">	<span class="attribute">if</span> (<span class="variable">$http_authorization</span> != <span class="string">&quot;&quot;</span>) &#123;</span><br><span class="line">		<span class="attribute">set</span> <span class="variable">$deny</span> <span class="string">&quot;0&quot;</span>;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="attribute">if</span> (<span class="variable">$deny</span> = <span class="string">&quot;1&quot;</span>) &#123;</span><br><span class="line">		<span class="attribute">return</span> <span class="number">403</span>;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">	<span class="attribute">upload_pass</span> /form-file-upload;</span><br><span class="line">	<span class="attribute">upload_store</span> /tmp/upload;</span><br><span class="line">	<span class="attribute">upload_store_access</span> user:rw group:rw all:rw;</span><br><span class="line">	<span class="attribute">upload_set_form_field</span> <span class="variable">$upload_field_name</span>.name <span class="string">&quot;<span class="variable">$upload_file_name</span>&quot;</span>;</span><br><span class="line">	<span class="attribute">upload_set_form_field</span> <span class="variable">$upload_field_name</span>.content_type <span class="string">&quot;<span class="variable">$upload_content_type</span>&quot;</span>;</span><br><span class="line">	<span class="attribute">upload_set_form_field</span> <span class="variable">$upload_field_name</span>.path <span class="string">&quot;<span class="variable">$upload_tmp_path</span>&quot;</span>;</span><br><span class="line">	<span class="attribute">upload_aggregate_form_field</span> <span class="string">&quot;<span class="variable">$upload_field_name</span>.md5&quot;</span> <span class="string">&quot;<span class="variable">$upload_file_md5</span>&quot;</span>;</span><br><span class="line">	<span class="attribute">upload_aggregate_form_field</span> <span class="string">&quot;<span class="variable">$upload_field_name</span>.size&quot;</span> <span class="string">&quot;<span class="variable">$upload_file_size</span>&quot;</span>;</span><br><span class="line">	<span class="attribute">upload_pass_form_field</span> <span class="string">&quot;^.*$&quot;</span>;</span><br><span class="line">	<span class="attribute">upload_cleanup</span> <span class="number">400</span> <span class="number">404</span> <span class="number">499</span> <span class="number">500</span>-<span class="number">505</span>;</span><br><span class="line">	<span class="attribute">upload_resumable</span> <span class="literal">on</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="section">location</span> /restconf/ &#123;</span><br><span class="line">        <span class="attribute">proxy_pass</span> http://rest;</span><br><span class="line">        <span class="attribute">include</span> /var/nginx/conf.d/proxy.conf;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="section">location</span> /restconf/operations/ciscosb-file:file-copy &#123;</span><br><span class="line">        <span class="attribute">proxy_pass</span> http://rest;</span><br><span class="line">        <span class="attribute">include</span> /var/nginx/conf.d/proxy.conf;</span><br><span class="line">        <span class="attribute">proxy_read_timeout</span> <span class="number">3600</span>;</span><br><span class="line">        <span class="attribute">proxy_send_timeout</span> <span class="number">3600</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">proxy_http_version</span> <span class="number">1</span>.<span class="number">1</span>;</span><br><span class="line"><span class="attribute">proxy_set_header</span> Host <span class="variable">$http_host</span>;</span><br><span class="line"><span class="attribute">proxy_set_header</span> X-Real-IP <span class="variable">$remote_addr</span>;</span><br><span class="line"><span class="attribute">proxy_set_header</span> X-Forwarded-For <span class="variable">$proxy_add_x_forwarded_for</span>;</span><br><span class="line"><span class="attribute">proxy_set_header</span> X-Forwarded-Proto <span class="variable">$scheme</span>;</span><br><span class="line"><span class="attribute">proxy_set_header</span> Authorization <span class="variable">$http_authorization</span>;</span><br><span class="line"><span class="attribute">proxy_set_header</span> Accept-Encoding <span class="string">&quot;&quot;</span>;</span><br><span class="line"><span class="attribute">proxy_set_header</span> Connection <span class="string">&quot;&quot;</span>;</span><br><span class="line"><span class="attribute">proxy_ssl_session_reuse</span> <span class="literal">off</span>;</span><br><span class="line"><span class="attribute">server_name_in_redirect</span> <span class="literal">off</span>;</span><br></pre></td></tr></table></figure>
+
+<p>如果我们请求中<strong>Authorization</strong>不为空，此时set $deny “0”，就可以向下调用<strong>upload</strong>模块。它会在调用**&#x2F;form-file-upload<strong>前，把文件上传到</strong>&#x2F;tmp&#x2F;upload<strong>下。并且由于没有设置</strong>level<strong>，它的存储格式类似</strong>&#x2F;tmp&#x2F;upload&#x2F;0000000001<strong>。至此我们可以实现任意文件上传至</strong>&#x2F;tmp&#x2F;upload**。</p>
+<p>我们接着向下分析，可以在<strong>rootfs&#x2F;etc&#x2F;nginx&#x2F;conf.d</strong>下找到<strong>web.upload.conf</strong>如下：</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">location</span> /form-file-upload &#123;</span><br><span class="line">	<span class="attribute">include</span> uwsgi_params;</span><br><span class="line">	<span class="attribute">proxy_buffering</span> <span class="literal">off</span>;</span><br><span class="line">	<span class="attribute">uwsgi_modifier1</span> <span class="number">9</span>;</span><br><span class="line">	<span class="attribute">uwsgi_pass</span> <span class="number">127.0.0.1:9003</span>;</span><br><span class="line">	<span class="attribute">uwsgi_read_timeout</span> <span class="number">3600</span>;</span><br><span class="line">	<span class="attribute">uwsgi_send_timeout</span> <span class="number">3600</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="section">location</span> /upload &#123;</span><br><span class="line">	<span class="attribute">set</span> <span class="variable">$deny</span> <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">        <span class="attribute">if</span> (-f /tmp/websession/token/<span class="variable">$cookie_sessionid</span>) &#123;</span><br><span class="line">                <span class="attribute">set</span> <span class="variable">$deny</span> <span class="string">&quot;0&quot;</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="attribute">if</span> (<span class="variable">$deny</span> = <span class="string">&quot;1&quot;</span>) &#123;</span><br><span class="line">                <span class="attribute">return</span> <span class="number">403</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">	<span class="attribute">upload_pass</span> /form-file-upload;</span><br><span class="line">	<span class="attribute">upload_store</span> /tmp/upload;</span><br><span class="line">	<span class="attribute">upload_store_access</span> user:rw group:rw all:rw;</span><br><span class="line">	<span class="attribute">upload_set_form_field</span> <span class="variable">$upload_field_name</span>.name <span class="string">&quot;<span class="variable">$upload_file_name</span>&quot;</span>;</span><br><span class="line">	<span class="attribute">upload_set_form_field</span> <span class="variable">$upload_field_name</span>.content_type <span class="string">&quot;<span class="variable">$upload_content_type</span>&quot;</span>;</span><br><span class="line">	<span class="attribute">upload_set_form_field</span> <span class="variable">$upload_field_name</span>.path <span class="string">&quot;<span class="variable">$upload_tmp_path</span>&quot;</span>;</span><br><span class="line">	<span class="attribute">upload_aggregate_form_field</span> <span class="string">&quot;<span class="variable">$upload_field_name</span>.md5&quot;</span> <span class="string">&quot;<span class="variable">$upload_file_md5</span>&quot;</span>;</span><br><span class="line">	<span class="attribute">upload_aggregate_form_field</span> <span class="string">&quot;<span class="variable">$upload_field_name</span>.size&quot;</span> <span class="string">&quot;<span class="variable">$upload_file_size</span>&quot;</span>;</span><br><span class="line">	<span class="attribute">upload_pass_form_field</span> <span class="string">&quot;^.*$&quot;</span>;</span><br><span class="line">	<span class="attribute">upload_cleanup</span> <span class="number">400</span> <span class="number">404</span> <span class="number">499</span> <span class="number">500</span>-<span class="number">505</span>;</span><br><span class="line">	<span class="attribute">upload_resumable</span> <span class="literal">on</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>我们可以发现其对**&#x2F;upload<strong>进行了</strong>$cookie_sessionid<strong>的检验，但是并没有对</strong>&#x2F;form-file-upload<strong>进行检验。我们看一下</strong>&#x2F;form-file-upload**的后端处理程序。启动脚本(uwsgi-launcher)如下：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">!/bin/sh /etc/rc.common</span></span><br><span class="line"></span><br><span class="line">export UWSGI_PLUGIN_DIR=/usr/lib/uwsgi/plugins</span><br><span class="line"></span><br><span class="line">start() &#123;</span><br><span class="line">        uwsgi -m --ini /etc/uwsgi/jsonrpc.ini &amp;</span><br><span class="line">        uwsgi -m --ini /etc/uwsgi/blockpage.ini &amp;</span><br><span class="line">        uwsgi -m --ini /etc/uwsgi/upload.ini &amp;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">stop() &#123;</span><br><span class="line">        killall -9 uwsgi</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>我们再去找一下**&#x2F;etc&#x2F;uwsgi&#x2F;upload.ini**</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">[uwsgi]</span><br><span class="line">plugins = cgi</span><br><span class="line">workers = 1</span><br><span class="line">master = 1</span><br><span class="line">uid = www-data</span><br><span class="line">gid = www-data</span><br><span class="line">socket=127.0.0.1:9003</span><br><span class="line">buffer-size=4096</span><br><span class="line">cgi = /www/cgi-bin/upload.cgi</span><br><span class="line">cgi-allowed-ext = .cgi</span><br><span class="line">cgi-allowed-ext = .pl</span><br><span class="line">cgi-timeout = 300</span><br><span class="line">ignore-sigpipe = true</span><br></pre></td></tr></table></figure>
+
+<p>从上述文件中我们可以知道**&#x2F;form-file-upload<strong>它对应的后端处理程序是</strong>&#x2F;www&#x2F;cgi-bin&#x2F;upload.cgi<strong>。因此我们可以无条件访问</strong>upload.cgi**。</p>
+<p>同时上述配置文件中我们可以看到检查了**&#x2F;tmp&#x2F;websession&#x2F;token&#x2F;$cookie_sessionid<strong>文件是否存在。但是存在缺陷，就是这里的</strong>$cookie_sessionid<strong>是用户在</strong>http<strong>请求中传进去的一个值，它并没有检查是否存在</strong>..&#x2F;..&#x2F;<strong>，也就是说我们可以通过跨目录来导致授权绕过。如：我们可以传递</strong>..&#x2F;..&#x2F;..&#x2F;etc&#x2F;firmware_version**。</p>
+<p><img src="/%5Cimg%5CPwn2Own-Austin-2021-Cisco-Rv34x-RCE%5C1.png"></p>
+<p>同时也可以看到在<strong>upload.cgi</strong>里对<strong>sessionid&#x3D;<strong>进行了检查，限制了它的字符，但是并没有考虑到传多个</strong>sessionid&#x3D;<strong>的情况。因为这里的</strong>sessionid&#x3D;<strong>是遍历</strong>HTTP_COOKIE</strong>并且取出它最后一个<strong>sessionid&#x3D;<strong>作为实际的</strong>sessionid&#x3D;<strong>使用，所以我们可以传两个</strong>sessionid&#x3D;<strong>。前一个用来绕过</strong>web.upload.conf</strong>里的判断，后一个当作正常的数据用来通过<strong>upload.cgi</strong>的判断。这样也可以实现无条件访问<strong>upload.cgi</strong>。</p>
+<p>我们接着看<strong>upload.cgi</strong></p>
+<p><img src="/%5Cimg%5CPwn2Own-Austin-2021-Cisco-Rv34x-RCE%5C2.png"></p>
+<p>传入适当的参数可以使得我们有能力任意文件移动到**&#x2F;tmp&#x2F;www<strong>下，通过这两个漏洞我们也可以伪造出一个</strong>session**。</p>
+<h4 id="CVE-2022-20707-Command-Injection"><a href="#CVE-2022-20707-Command-Injection" class="headerlink" title="CVE-2022-20707 Command Injection"></a>CVE-2022-20707 Command Injection</h4><p>我们继续查看<strong>upload.cgi</strong>。</p>
+<p><img src="/%5Cimg%5CPwn2Own-Austin-2021-Cisco-Rv34x-RCE%5C3.png"></p>
+<p>这个漏洞可以使得任意命令执行。</p>
+<h3 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h3><p><a target="_blank" rel="noopener" href="https://bestwing.me/Pwning%20a%20Cisco%20RV340%20%20%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90%EF%BC%88CVE-2022-20705%20%E5%92%8C%20CVE-2022-20707.html">https://bestwing.me/Pwning%20a%20Cisco%20RV340%20%20%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90%EF%BC%88CVE-2022-20705%20%E5%92%8C%20CVE-2022-20707.html</a></p>
+<p><a target="_blank" rel="noopener" href="https://blog.relyze.com/2022/04/pwning-cisco-rv340-with-4-bug-chain.html">https://blog.relyze.com/2022/04/pwning-cisco-rv340-with-4-bug-chain.html</a></p>
+<p><a target="_blank" rel="noopener" href="https://paper.seebug.org/1890/">https://paper.seebug.org/1890/</a></p>
+<p><a target="_blank" rel="noopener" href="https://onekey.com/blog/advisory-cisco-rv34x-authentication-bypass-remote-command-execution/">https://onekey.com/blog/advisory-cisco-rv34x-authentication-bypass-remote-command-execution/</a></p>
+<p><a target="_blank" rel="noopener" href="https://nosec.org/home/detail/4985.html">https://nosec.org/home/detail/4985.html</a></p>
+<h3 id="文章首发"><a href="#文章首发" class="headerlink" title="文章首发"></a>文章首发</h3><p><a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s/2joZwexIdVdgc5NL8W3J-A">https://mp.weixin.qq.com/s/2joZwexIdVdgc5NL8W3J-A</a></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/11/06/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%BA%8C%E7%BB%93%E6%9D%9F/" rel="prev" title="写在大二结束">
+      <i class="fa fa-chevron-left"></i> 写在大二结束
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2023/11/06/Cisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98/" rel="next" title="Cisco-Rv32X-从1day分析到0day挖掘">
+      Cisco-Rv32X-从1day分析到0day挖掘 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%89%8D%E8%A8%80"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9B%BA%E4%BB%B6%E8%A7%A3%E5%8E%8B"><span class="nav-number">2.</span> <span class="nav-text">固件解压</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90"><span class="nav-number">3.</span> <span class="nav-text">漏洞分析</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#CVE-2022-20705-Improper-Session-Management-Vulnerability"><span class="nav-number">3.1.</span> <span class="nav-text">CVE-2022-20705 Improper Session Management Vulnerability</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#CVE-2022-20707-Command-Injection"><span class="nav-number">3.2.</span> <span class="nav-text">CVE-2022-20707 Command Injection</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E9%93%BE%E6%8E%A5"><span class="nav-number">4.</span> <span class="nav-text">参考链接</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%96%87%E7%AB%A0%E9%A6%96%E5%8F%91"><span class="nav-number">5.</span> <span class="nav-text">文章首发</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">fxc233</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">12</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">fxc233</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

