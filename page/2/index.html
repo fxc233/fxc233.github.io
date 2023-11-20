@@ -152,7 +152,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="https://fxc233.github.io/2023/11/06/%E6%9F%90%E6%91%84%E5%83%8F%E5%A4%B4%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E7%BB%8F%E5%8E%86/">
+    <link itemprop="mainEntityOfPage" href="https://fxc233.github.io/2023/11/06/fdcalls-%E5%BF%AB%E9%80%9F%E6%8C%96%E6%8E%98%E8%AE%BE%E5%A4%87%E9%80%BB%E8%BE%91%E6%B4%9E%E6%96%B9%E6%B3%95%E5%88%86%E4%BA%AB/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
@@ -166,7 +166,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/11/06/%E6%9F%90%E6%91%84%E5%83%8F%E5%A4%B4%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E7%BB%8F%E5%8E%86/" class="post-title-link" itemprop="url">某摄像头漏洞挖掘经历</a>
+            <a href="/2023/11/06/fdcalls-%E5%BF%AB%E9%80%9F%E6%8C%96%E6%8E%98%E8%AE%BE%E5%A4%87%E9%80%BB%E8%BE%91%E6%B4%9E%E6%96%B9%E6%B3%95%E5%88%86%E4%BA%AB/" class="post-title-link" itemprop="url">fdcalls-快速挖掘设备逻辑洞方法分享</a>
         </h2>
 
         <div class="post-meta">
@@ -177,7 +177,7 @@
               <span class="post-meta-item-text">Posted on</span>
               
 
-              <time title="Created: 2023-11-06 14:10:23 / Modified: 17:39:32" itemprop="dateCreated datePublished" datetime="2023-11-06T14:10:23+08:00">2023-11-06</time>
+              <time title="Created: 2023-11-06 14:17:31 / Modified: 17:36:12" itemprop="dateCreated datePublished" datetime="2023-11-06T14:17:31+08:00">2023-11-06</time>
             </span>
 
           
@@ -191,26 +191,21 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>文章首发：<a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s?__biz=MzIzMTc1MjExOQ==&mid=2247508121&idx=1&sn=e34f59e53a1394600c7e768fcbf237f9&chksm=e89d8841dfea0157a63c1a15213306739f936f3b63aa8e32ae6657a87934aec82d60bfe046b8&cur_album_id=1690922801836113920&scene=189#wechat_redirect">https://mp.weixin.qq.com/s?__biz=MzIzMTc1MjExOQ==&amp;mid=2247508121&amp;idx=1&amp;sn=e34f59e53a1394600c7e768fcbf237f9&amp;chksm=e89d8841dfea0157a63c1a15213306739f936f3b63aa8e32ae6657a87934aec82d60bfe046b8&amp;cur_album_id=1690922801836113920&amp;scene=189#wechat_redirect</a></p>
-<p>在看了一位师傅的关于摄像头的文章之后，我也心血来潮找了一款摄像头（某达最新款CP7）固件去挖一下练练手。</p>
-<h3 id="串口获取shell"><a href="#串口获取shell" class="headerlink" title="串口获取shell"></a>串口获取shell</h3><p>拿到摄像头拆下来之后尝试了一波串口获取<code>shell</code>。</p>
-<p><img src="/img/%E6%9F%90%E6%91%84%E5%83%8F%E5%A4%B4%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E7%BB%8F%E5%8E%86/1.png"></p>
-<p>但是连上之后发现这个摄像头貌似无法获得一个正常的<code>shell</code>，只能用来看回显信息。</p>
-<p><img src="/img/%E6%9F%90%E6%91%84%E5%83%8F%E5%A4%B4%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E7%BB%8F%E5%8E%86/2.png"></p>
-<h3 id="分析"><a href="#分析" class="headerlink" title="分析"></a>分析</h3><p>用<code>IDA</code>打开摄像头相关程序之后，可以发现和那位师傅分析的固件大同小异。那么，如果我们想要挖掘新的漏洞的话也只能从不同的角度去进行挖掘了。之前那个师傅找到的是某个类似于后门的命令执行漏洞。那么我们再去找看看能不能发现一些其他的漏洞点。</p>
-<p>首先还是绑定并监听1300端口。</p>
-<p><img src="/img/%E6%9F%90%E6%91%84%E5%83%8F%E5%A4%B4%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E7%BB%8F%E5%8E%86/3.png"></p>
-<p>然后等待用户连接1300端口。</p>
-<p><img src="/img/%E6%9F%90%E6%91%84%E5%83%8F%E5%A4%B4%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E7%BB%8F%E5%8E%86/4.png"></p>
-<p>之后获取用户端传入的内容。</p>
-<p><img src="/img/%E6%9F%90%E6%91%84%E5%83%8F%E5%A4%B4%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E7%BB%8F%E5%8E%86/5.png"></p>
-<p><img src="/img/%E6%9F%90%E6%91%84%E5%83%8F%E5%A4%B4%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E7%BB%8F%E5%8E%86/6.png"></p>
-<p>接下来会对用户的输入进行判断，并进行相应的处理。偶然发现了一个和那位师傅提出的不一样的命令执行触发点。如果匹配到的是<code>SYSTEMEX</code>这个标签，那么会进入<code>sub_14404</code>函数。</p>
-<p><img src="/img/%E6%9F%90%E6%91%84%E5%83%8F%E5%A4%B4%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E7%BB%8F%E5%8E%86/7.png"></p>
-<p>这个函数中，会把所包含的字符串传入<code>sub_16E04</code>函数中进行操作，而这个函数里有关于<code>popen</code>的操作，因此可以达到一个命令执行。<br><img src="/img/%E6%9F%90%E6%91%84%E5%83%8F%E5%A4%B4%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E7%BB%8F%E5%8E%86/8.png"></p>
-<p><img src="/img/%E6%9F%90%E6%91%84%E5%83%8F%E5%A4%B4%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E7%BB%8F%E5%8E%86/9.png"></p>
-<p><code>exp</code>这里就不贴了，感兴趣的师傅可以自行尝试。</p>
-<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>算是在大师傅后面捡了个漏，<code>IOT</code>的一些设备依旧不是很严谨，只要认真挖挖还是能找到一些漏洞的。</p>
+          <h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>接触<strong>iot</strong>也快有一年的时间了，一年来也挖掘了大大小小几十个洞，虽然能有些产出但是却逐渐对人工审计感到无趣和疲惫。在此之间我也尝试过通过使用<strong>污点分析</strong>，<strong>fuzz</strong>等方法去进行自动化漏洞挖掘，但总因为目标不明确而导致挖掘效果不是很好。于是就产生了写一款可以用来辅助跨文件分析危险函数的工具的想法，正好最近在看到 <a target="_blank" rel="noopener" href="https://conference.hitb.org/hitbsecconf2023ams/materials/D1T1%20-%20Your%20Not%20So%20Home%20Office%20-%20Soho%20Hacking%20at%20Pwn2Own%20-%20McCaulay%20Hudson%20&%20Alex%20Plaskett.pdf">https://conference.hitb.org/hitbsecconf2023ams/materials/D1T1%20-%20Your%20Not%20So%20Home%20Office%20-%20Soho%20Hacking%20at%20Pwn2Own%20-%20McCaulay%20Hudson%20&%20Alex%20Plaskett.pdf</a>时，看到了文章中<strong>dcalls</strong>这个工具。他的效果可以很好地满足我之前的想法，但是这款工具貌似并没有开源，于是我就自己尝试去实现了一下这个工具。写完之后感觉效果还行（但是由于时间匆忙，笔者能力有限等原因，此工具也存在很多bug，希望师傅们海涵），又恰好想起了当时自己刚入门<strong>iot</strong>，还不怎么清楚如何进行漏洞挖掘时，不知从何下手却又着急想要出一些成果的场景。于是写下这篇文章，分享给刚入门，并且希望能快速挖掘到漏洞的师傅。</p>
+<h2 id="最常见的逻辑洞"><a href="#最常见的逻辑洞" class="headerlink" title="最常见的逻辑洞"></a>最常见的逻辑洞</h2><p>在我看来，在一些中小型厂商的设备中，最常见的逻辑洞应该是命令注入了。不仅<strong>exp</strong>简单，并且<strong>危害大</strong>，经常可以很容易实现<strong>rce</strong>。想要快速寻找到命令注入漏洞，可以从一些危险函数下手，看看这些危险函数的参数是否可以被我们用户控制。常见的危险函数如<strong>system</strong>，<strong>execve</strong>等。但是很多厂商会在自定义的动态链接库中定义自己的函数，并且在其内部调用这些危险函数。往往这些函数是最有可能被我们忽略掉的，如果在审计时可以注意到这些函数那我们挖掘到漏洞的概率也就会大大提高了。</p>
+<h2 id="如何快速进行漏洞挖掘"><a href="#如何快速进行漏洞挖掘" class="headerlink" title="如何快速进行漏洞挖掘"></a>如何快速进行漏洞挖掘</h2><p><strong>fdcalls</strong>是我编写的一款用来辅助我们寻找危险函数调用以及可能的危险函数的一款工具，已在github上开源（<a target="_blank" rel="noopener" href="https://github.com/fxc233/fdcalls%EF%BC%89%E3%80%82">https://github.com/fxc233/fdcalls）。</a></p>
+<p>接着我们就来看一下如何使用这个工具快速的发现可能的漏洞点，以及可能存在的危险函数。这款工具分为两个模式，第一个模式仅匹配目标文件可能存在命令注入漏洞的地方，并且返回漏洞点及危险函数调用链。如下图，此时我们就可以去显示的地址对是否存在漏洞做进一步的判断。当然由于时间问题，我并没有尝试测过很多不同厂商的设备，这就导致可能会在运行脚本时多出一些错误信息的提示，但是只要脚本不是中断报错，那么就还是可以正常进行分析的。当然显示出来的路径也可能会存在误报的现象。</p>
+<p><img src="/img/fdcalls-%E5%BF%AB%E9%80%9F%E6%8C%96%E6%8E%98%E8%AE%BE%E5%A4%87%E9%80%BB%E8%BE%91%E6%B4%9E%E6%96%B9%E6%B3%95%E5%88%86%E4%BA%AB/1.png"></p>
+<p>第二个模式会显示所有可能的危险函数。加上这个模式的原因是，因为笔者的能力有限，所以一些函数调用处可能处理的不是很好，故有一些危险函数虽然会被会被调用却没能在上面的路径当中显示出来。如下图所示，我们可以看到可能存在的危险函数以及定义他们的动态链接库。我们在模式以扫描出的路径中不能发现漏洞或者扫描不出路径时，可以去二进制文件中搜索这些函数名，如果函数存在那么也有存在漏洞的可能。</p>
+<p><img src="/img/fdcalls-%E5%BF%AB%E9%80%9F%E6%8C%96%E6%8E%98%E8%AE%BE%E5%A4%87%E9%80%BB%E8%BE%91%E6%B4%9E%E6%96%B9%E6%B3%95%E5%88%86%E4%BA%AB/2.png"></p>
+<h2 id="实战应用"><a href="#实战应用" class="headerlink" title="实战应用"></a>实战应用</h2><p>笔者这里就拿在<strong>github</strong>上看到某个的今年新出的<strong>cve</strong>（<a target="_blank" rel="noopener" href="https://github.com/kagehutatsu/IOT_Vulnerability/tree/main/LB-Link/WR450H/CVE-2023-26697">https://github.com/kagehutatsu/IOT_Vulnerability&#x2F;tree&#x2F;main&#x2F;LB-Link&#x2F;WR450H&#x2F;CVE-2023-26697</a>），来看一下这个工具效果。看漏洞提交报告可知，漏洞函数是**.&#x2F;lib&#x2F;libshare-0.0.26.so里的定义的bs_SetForwardingInfo**。</p>
+<p><img src="/img/fdcalls-%E5%BF%AB%E9%80%9F%E6%8C%96%E6%8E%98%E8%AE%BE%E5%A4%87%E9%80%BB%E8%BE%91%E6%B4%9E%E6%96%B9%E6%B3%95%E5%88%86%E4%BA%AB/3.png"></p>
+<p>我们分析的二进制文件是**.&#x2F;bin&#x2F;goahead**，尝试直接用工具扫描试试。</p>
+<p><img src="/img/fdcalls-%E5%BF%AB%E9%80%9F%E6%8C%96%E6%8E%98%E8%AE%BE%E5%A4%87%E9%80%BB%E8%BE%91%E6%B4%9E%E6%96%B9%E6%B3%95%E5%88%86%E4%BA%AB/4.png"></p>
+<p>很可惜我们并没能直接定位到漏洞函数调用的位置，不过好在我们能识别到存在这个危险函数，对我们漏洞挖掘还是能有一定的帮助的。</p>
+<h2 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h2><p>祝各位师傅每天都能挖到新的<strong>0day</strong>。最后如果有师傅在使用这个工具是出现了bug，欢迎师傅们在github上提issue。</p>
+<h2 id="链接"><a href="#链接" class="headerlink" title="链接"></a>链接</h2><p>项目地址：<a target="_blank" rel="noopener" href="https://github.com/fxc233/fdcalls">https://github.com/fxc233/fdcalls</a></p>
+<p>文章首发：<a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s/jZd5BpAmwFZOZuNjc4-oqA">https://mp.weixin.qq.com/s/jZd5BpAmwFZOZuNjc4-oqA</a></p>
 
       
     </div>
@@ -230,7 +225,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="https://fxc233.github.io/2023/11/05/%E6%88%91%E7%9A%84%E6%96%B0%E5%8D%9A%E5%AE%A2/">
+    <link itemprop="mainEntityOfPage" href="https://fxc233.github.io/2023/11/06/Cisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
@@ -244,7 +239,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/11/05/%E6%88%91%E7%9A%84%E6%96%B0%E5%8D%9A%E5%AE%A2/" class="post-title-link" itemprop="url">我的新博客</a>
+            <a href="/2023/11/06/Cisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98/" class="post-title-link" itemprop="url">Cisco-Rv32X-从1day分析到0day挖掘</a>
         </h2>
 
         <div class="post-meta">
@@ -255,7 +250,7 @@
               <span class="post-meta-item-text">Posted on</span>
               
 
-              <time title="Created: 2023-11-05 13:48:55 / Modified: 22:52:21" itemprop="dateCreated datePublished" datetime="2023-11-05T13:48:55+08:00">2023-11-05</time>
+              <time title="Created: 2023-11-06 14:17:02 / Modified: 17:35:28" itemprop="dateCreated datePublished" datetime="2023-11-06T14:17:02+08:00">2023-11-06</time>
             </span>
 
           
@@ -269,7 +264,281 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>之前一直接用的是博客园，现在终于在github上用hexo搭了一个新博客，会把些实战有关，及与个人经历有关的博客搬过来，以后的文章大抵就是在这里发了。</p>
+          <h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>拿到一个iot设备，笔者比较喜欢先去看一下它的历史漏洞，也许可以从中得到一些启发。发现Cisco之前修补过这个系列设备的命令注入漏洞。</p>
+<p><a target="_blank" rel="noopener" href="https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-rv-command-inject-BY4c5zd">https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-rv-command-inject-BY4c5zd</a></p>
+<p><img src="/img/Cisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98/1.png"></p>
+<h3 id="1day分析"><a href="#1day分析" class="headerlink" title="1day分析"></a>1day分析</h3><p>因为漏洞通告中有相关固件版本，于是我就去<strong>diff</strong>了一下修补前和修补后两个固件。</p>
+<p><img src="/img/Cisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98/2.png"></p>
+<p>在<strong>ssi.cgi</strong>这个文件当中，笔者发现修复之后的固件比修复前的固件多出了两个函数，那么大概率就是通过这两个函数对存在命令注入的地方加上了检查以修复命令注入漏洞。直接看一下修复之后的固件里的<strong>NK_CHECK_LANGUAGE</strong>函数。很明显，这个函数的作用是对参数进行了判断和设置，和我们预想的一致。那么旧版本固件中存在的命令注入漏洞大概率出现在这个函数的上层函数中。</p>
+<p><img src="/img/Cisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98/3.png"></p>
+<p>通过交叉引用，我们可以很轻松地找到其上层函数是<strong>NK_UiLanguageChange</strong>，我们看一下修补前的固件中的这个函数实现了什么功能。通过函数名，大体可以判断出这个函数的作用应该是切换界面的语言。这个函数首先获取了<strong>submitStatus</strong>和<strong>changelanguage</strong>的值，经过一些判断后，把<strong>changelanguage</strong>的值作为参数传进<strong>CreateFormatFile</strong>函数中。</p>
+<p><img src="/img/Cisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98/4.png"></p>
+<p>我们继续去看一下<strong>CreateFormatFile</strong>函数。很明显，这个函数由于传进来的参数<strong>param_1</strong>没有进过任何检查，存在一个命令注入漏洞。</p>
+<p><img src="/img/Cisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98/5.png"></p>
+<p>这个漏洞的修复方式也很简单，直接用<strong>NK_CHECK_LANGUAGE</strong>函数对参数进行了过滤。</p>
+<h3 id="捕获0day"><a href="#捕获0day" class="headerlink" title="捕获0day"></a>捕获0day</h3><h4 id="漏洞分析"><a href="#漏洞分析" class="headerlink" title="漏洞分析"></a>漏洞分析</h4><p>知道这个漏洞的前因后果之后，笔者就在想这个被修复之后的固件当中是否依旧可能存在一些没有过滤或者过滤不完整的地方。就去看了一些感觉可能存在漏洞的函数，后来就找到了<strong>NK_UiSetPassword</strong>这个函数，这个函数的作用是更改用户的密码。</p>
+<p><img src="/img/Cisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98/6.png"></p>
+<p>虽然这个函数中对参数进行了一定的过滤，但是这里对于危险字符过滤的并不是很严谨，所以这里也存在一个命令注入漏洞。</p>
+<p><img src="/img/Cisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98/7.png"></p>
+<p>其它地方应该也会存在不少类似的漏洞，但是笔者这里就没有继续去看了，感兴趣的师傅也许可以去找看看。</p>
+<h4 id="Poc"><a href="#Poc" class="headerlink" title="Poc"></a>Poc</h4><p><a target="_blank" rel="noopener" href="https://github.com/fxc233/iot-vul/tree/main/Cisco/Cisco%20RV32X">https://github.com/fxc233/iot-vul/tree/main/Cisco/Cisco%20RV32X</a></p>
+<h4 id="Notices"><a href="#Notices" class="headerlink" title="Notices"></a>Notices</h4><p>目前该漏洞已经提交给了思科厂商，思科已确认了该漏洞。<a target="_blank" rel="noopener" href="https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-sb-rv01x_rv32x_rce-nzAGWWDD">https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-sb-rv01x_rv32x_rce-nzAGWWDD</a></p>
+<p><img src="/img/Cisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98/8.png"></p>
+<h3 id="文章首发"><a href="#文章首发" class="headerlink" title="文章首发"></a>文章首发</h3><p><a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s/UwsQH9nr1D4FzK2lhy_W2A">https://mp.weixin.qq.com/s/UwsQH9nr1D4FzK2lhy_W2A</a></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://fxc233.github.io/2023/11/06/Pwn2Own-Austin-2021-Cisco-Rv34x-RCE/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="fxc233">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="fxc233's blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/11/06/Pwn2Own-Austin-2021-Cisco-Rv34x-RCE/" class="post-title-link" itemprop="url">Pwn2Own-Austin-2021-Cisco-Rv34x-RCE</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2023-11-06 14:16:09 / Modified: 17:36:40" itemprop="dateCreated datePublished" datetime="2023-11-06T14:16:09+08:00">2023-11-06</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>这个<strong>RCE漏洞利用链</strong>的实现是由几个逻辑洞的结合而导致的，这几天我花了一些时间复现了一遍，在此记录一下。</p>
+<h3 id="固件解压"><a href="#固件解压" class="headerlink" title="固件解压"></a>固件解压</h3><p>我下载的是<strong>RV345 v1.0.03.24</strong>，从官网下载到压缩包解压之后可以看到它的<strong>rootfs</strong>是<strong>ubi</strong>格式的<strong>img</strong>。之前我都是使用<strong>kali</strong>里的 binwalk 对其进行解压可以直接得到解压之后的文件系统。但是由于前几天我的虚拟机坏了，不得不进行重装，但是我还没有装 kali。故找了一下提取<strong>ubi</strong>格式的方式。在<strong>github</strong>上有一个项目：<a target="_blank" rel="noopener" href="https://github.com/nlitsme/ubidump">https://github.com/nlitsme/ubidump</a> ，通过里面的<strong>ubidump.py</strong>可以很轻松的提取出<strong>ubi</strong>格式的文件。命令如下：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python3 ubidump.py -s . 0.ubi</span><br></pre></td></tr></table></figure>
+
+<h3 id="漏洞分析"><a href="#漏洞分析" class="headerlink" title="漏洞分析"></a>漏洞分析</h3><h4 id="CVE-2022-20705-Improper-Session-Management-Vulnerability"><a href="#CVE-2022-20705-Improper-Session-Management-Vulnerability" class="headerlink" title="CVE-2022-20705 Improper Session Management Vulnerability"></a>CVE-2022-20705 Improper Session Management Vulnerability</h4><p><strong>CVE-2022-20705 Improper Session Management Vulnerability</strong>，是由于<strong>nginx</strong>的配置不当导致的。<strong>nginx</strong>的配置文件是**&#x2F;etc&#x2F;nginx&#x2F;nginx.conf**，如下</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">user</span> www-data;</span><br><span class="line"><span class="attribute">worker_processes</span>  <span class="number">4</span>;</span><br><span class="line"></span><br><span class="line"><span class="attribute">error_log</span> /dev/null;</span><br><span class="line"></span><br><span class="line"><span class="section">events</span> &#123;</span><br><span class="line">    <span class="attribute">worker_connections</span>  <span class="number">1024</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="section">http</span> &#123;</span><br><span class="line">	<span class="attribute">access_log</span> <span class="literal">off</span>;</span><br><span class="line">	<span class="comment">#error_log /var/log/nginx/error.log  error;</span></span><br><span class="line"></span><br><span class="line">	<span class="section">upstream</span> jsonrpc &#123;</span><br><span class="line">		<span class="attribute">server</span> <span class="number">127.0.0.1:9000</span>;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="section">upstream</span> rest &#123;</span><br><span class="line">		<span class="attribute">server</span> <span class="number">127.0.0.1:8008</span>;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment"># For websocket proxy server</span></span><br><span class="line">	<span class="attribute">include</span> /var/nginx/conf.d/proxy.websocket.conf;</span><br><span class="line">	<span class="attribute">include</span> /var/nginx/sites-enabled/*;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>可以发现它又加载了**&#x2F;var&#x2F;nginx&#x2F;conf.d&#x2F;proxy.websocket.conf和&#x2F;var&#x2F;nginx&#x2F;sites-enabled&#x2F;<strong>，但是固件解压出来的rootfs里的var目录有些问题，所以笔者只能根据别人的文章找一下漏洞发生的配置文件。结合</strong>rest.url.conf<strong>和</strong>proxy.conf**来看。</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">location</span> /api/ &#123;</span><br><span class="line">        <span class="attribute">proxy_pass</span> http://rest;</span><br><span class="line">        <span class="attribute">include</span> /var/nginx/conf.d/proxy.conf;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="section">location</span> /api/operations/ciscosb-file:file-copy &#123;</span><br><span class="line">	<span class="attribute">proxy_pass</span> http://rest;</span><br><span class="line">	<span class="attribute">include</span> /var/nginx/conf.d/proxy.conf;</span><br><span class="line">	<span class="attribute">proxy_read_timeout</span> <span class="number">3600</span>;</span><br><span class="line">	<span class="attribute">proxy_send_timeout</span> <span class="number">3600</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="section">location</span> /api/operations/ciscosb-file:form-file-upload &#123;</span><br><span class="line">	<span class="attribute">set</span> <span class="variable">$deny</span> <span class="number">1</span>;</span><br><span class="line"> </span><br><span class="line">	<span class="attribute">if</span> (<span class="variable">$http_authorization</span> != <span class="string">&quot;&quot;</span>) &#123;</span><br><span class="line">		<span class="attribute">set</span> <span class="variable">$deny</span> <span class="string">&quot;0&quot;</span>;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="attribute">if</span> (<span class="variable">$deny</span> = <span class="string">&quot;1&quot;</span>) &#123;</span><br><span class="line">		<span class="attribute">return</span> <span class="number">403</span>;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">	<span class="attribute">upload_pass</span> /form-file-upload;</span><br><span class="line">	<span class="attribute">upload_store</span> /tmp/upload;</span><br><span class="line">	<span class="attribute">upload_store_access</span> user:rw group:rw all:rw;</span><br><span class="line">	<span class="attribute">upload_set_form_field</span> <span class="variable">$upload_field_name</span>.name <span class="string">&quot;<span class="variable">$upload_file_name</span>&quot;</span>;</span><br><span class="line">	<span class="attribute">upload_set_form_field</span> <span class="variable">$upload_field_name</span>.content_type <span class="string">&quot;<span class="variable">$upload_content_type</span>&quot;</span>;</span><br><span class="line">	<span class="attribute">upload_set_form_field</span> <span class="variable">$upload_field_name</span>.path <span class="string">&quot;<span class="variable">$upload_tmp_path</span>&quot;</span>;</span><br><span class="line">	<span class="attribute">upload_aggregate_form_field</span> <span class="string">&quot;<span class="variable">$upload_field_name</span>.md5&quot;</span> <span class="string">&quot;<span class="variable">$upload_file_md5</span>&quot;</span>;</span><br><span class="line">	<span class="attribute">upload_aggregate_form_field</span> <span class="string">&quot;<span class="variable">$upload_field_name</span>.size&quot;</span> <span class="string">&quot;<span class="variable">$upload_file_size</span>&quot;</span>;</span><br><span class="line">	<span class="attribute">upload_pass_form_field</span> <span class="string">&quot;^.*$&quot;</span>;</span><br><span class="line">	<span class="attribute">upload_cleanup</span> <span class="number">400</span> <span class="number">404</span> <span class="number">499</span> <span class="number">500</span>-<span class="number">505</span>;</span><br><span class="line">	<span class="attribute">upload_resumable</span> <span class="literal">on</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="section">location</span> /restconf/ &#123;</span><br><span class="line">        <span class="attribute">proxy_pass</span> http://rest;</span><br><span class="line">        <span class="attribute">include</span> /var/nginx/conf.d/proxy.conf;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="section">location</span> /restconf/operations/ciscosb-file:file-copy &#123;</span><br><span class="line">        <span class="attribute">proxy_pass</span> http://rest;</span><br><span class="line">        <span class="attribute">include</span> /var/nginx/conf.d/proxy.conf;</span><br><span class="line">        <span class="attribute">proxy_read_timeout</span> <span class="number">3600</span>;</span><br><span class="line">        <span class="attribute">proxy_send_timeout</span> <span class="number">3600</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">proxy_http_version</span> <span class="number">1</span>.<span class="number">1</span>;</span><br><span class="line"><span class="attribute">proxy_set_header</span> Host <span class="variable">$http_host</span>;</span><br><span class="line"><span class="attribute">proxy_set_header</span> X-Real-IP <span class="variable">$remote_addr</span>;</span><br><span class="line"><span class="attribute">proxy_set_header</span> X-Forwarded-For <span class="variable">$proxy_add_x_forwarded_for</span>;</span><br><span class="line"><span class="attribute">proxy_set_header</span> X-Forwarded-Proto <span class="variable">$scheme</span>;</span><br><span class="line"><span class="attribute">proxy_set_header</span> Authorization <span class="variable">$http_authorization</span>;</span><br><span class="line"><span class="attribute">proxy_set_header</span> Accept-Encoding <span class="string">&quot;&quot;</span>;</span><br><span class="line"><span class="attribute">proxy_set_header</span> Connection <span class="string">&quot;&quot;</span>;</span><br><span class="line"><span class="attribute">proxy_ssl_session_reuse</span> <span class="literal">off</span>;</span><br><span class="line"><span class="attribute">server_name_in_redirect</span> <span class="literal">off</span>;</span><br></pre></td></tr></table></figure>
+
+<p>如果我们请求中<strong>Authorization</strong>不为空，此时set $deny “0”，就可以向下调用<strong>upload</strong>模块。它会在调用**&#x2F;form-file-upload<strong>前，把文件上传到</strong>&#x2F;tmp&#x2F;upload<strong>下。并且由于没有设置</strong>level<strong>，它的存储格式类似</strong>&#x2F;tmp&#x2F;upload&#x2F;0000000001<strong>。至此我们可以实现任意文件上传至</strong>&#x2F;tmp&#x2F;upload**。</p>
+<p>我们接着向下分析，可以在<strong>rootfs&#x2F;etc&#x2F;nginx&#x2F;conf.d</strong>下找到<strong>web.upload.conf</strong>如下：</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">location</span> /form-file-upload &#123;</span><br><span class="line">	<span class="attribute">include</span> uwsgi_params;</span><br><span class="line">	<span class="attribute">proxy_buffering</span> <span class="literal">off</span>;</span><br><span class="line">	<span class="attribute">uwsgi_modifier1</span> <span class="number">9</span>;</span><br><span class="line">	<span class="attribute">uwsgi_pass</span> <span class="number">127.0.0.1:9003</span>;</span><br><span class="line">	<span class="attribute">uwsgi_read_timeout</span> <span class="number">3600</span>;</span><br><span class="line">	<span class="attribute">uwsgi_send_timeout</span> <span class="number">3600</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="section">location</span> /upload &#123;</span><br><span class="line">	<span class="attribute">set</span> <span class="variable">$deny</span> <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">        <span class="attribute">if</span> (-f /tmp/websession/token/<span class="variable">$cookie_sessionid</span>) &#123;</span><br><span class="line">                <span class="attribute">set</span> <span class="variable">$deny</span> <span class="string">&quot;0&quot;</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="attribute">if</span> (<span class="variable">$deny</span> = <span class="string">&quot;1&quot;</span>) &#123;</span><br><span class="line">                <span class="attribute">return</span> <span class="number">403</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">	<span class="attribute">upload_pass</span> /form-file-upload;</span><br><span class="line">	<span class="attribute">upload_store</span> /tmp/upload;</span><br><span class="line">	<span class="attribute">upload_store_access</span> user:rw group:rw all:rw;</span><br><span class="line">	<span class="attribute">upload_set_form_field</span> <span class="variable">$upload_field_name</span>.name <span class="string">&quot;<span class="variable">$upload_file_name</span>&quot;</span>;</span><br><span class="line">	<span class="attribute">upload_set_form_field</span> <span class="variable">$upload_field_name</span>.content_type <span class="string">&quot;<span class="variable">$upload_content_type</span>&quot;</span>;</span><br><span class="line">	<span class="attribute">upload_set_form_field</span> <span class="variable">$upload_field_name</span>.path <span class="string">&quot;<span class="variable">$upload_tmp_path</span>&quot;</span>;</span><br><span class="line">	<span class="attribute">upload_aggregate_form_field</span> <span class="string">&quot;<span class="variable">$upload_field_name</span>.md5&quot;</span> <span class="string">&quot;<span class="variable">$upload_file_md5</span>&quot;</span>;</span><br><span class="line">	<span class="attribute">upload_aggregate_form_field</span> <span class="string">&quot;<span class="variable">$upload_field_name</span>.size&quot;</span> <span class="string">&quot;<span class="variable">$upload_file_size</span>&quot;</span>;</span><br><span class="line">	<span class="attribute">upload_pass_form_field</span> <span class="string">&quot;^.*$&quot;</span>;</span><br><span class="line">	<span class="attribute">upload_cleanup</span> <span class="number">400</span> <span class="number">404</span> <span class="number">499</span> <span class="number">500</span>-<span class="number">505</span>;</span><br><span class="line">	<span class="attribute">upload_resumable</span> <span class="literal">on</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>我们可以发现其对**&#x2F;upload<strong>进行了</strong>$cookie_sessionid<strong>的检验，但是并没有对</strong>&#x2F;form-file-upload<strong>进行检验。我们看一下</strong>&#x2F;form-file-upload**的后端处理程序。启动脚本(uwsgi-launcher)如下：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">!/bin/sh /etc/rc.common</span></span><br><span class="line"></span><br><span class="line">export UWSGI_PLUGIN_DIR=/usr/lib/uwsgi/plugins</span><br><span class="line"></span><br><span class="line">start() &#123;</span><br><span class="line">        uwsgi -m --ini /etc/uwsgi/jsonrpc.ini &amp;</span><br><span class="line">        uwsgi -m --ini /etc/uwsgi/blockpage.ini &amp;</span><br><span class="line">        uwsgi -m --ini /etc/uwsgi/upload.ini &amp;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">stop() &#123;</span><br><span class="line">        killall -9 uwsgi</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>我们再去找一下**&#x2F;etc&#x2F;uwsgi&#x2F;upload.ini**</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">[uwsgi]</span><br><span class="line">plugins = cgi</span><br><span class="line">workers = 1</span><br><span class="line">master = 1</span><br><span class="line">uid = www-data</span><br><span class="line">gid = www-data</span><br><span class="line">socket=127.0.0.1:9003</span><br><span class="line">buffer-size=4096</span><br><span class="line">cgi = /www/cgi-bin/upload.cgi</span><br><span class="line">cgi-allowed-ext = .cgi</span><br><span class="line">cgi-allowed-ext = .pl</span><br><span class="line">cgi-timeout = 300</span><br><span class="line">ignore-sigpipe = true</span><br></pre></td></tr></table></figure>
+
+<p>从上述文件中我们可以知道**&#x2F;form-file-upload<strong>它对应的后端处理程序是</strong>&#x2F;www&#x2F;cgi-bin&#x2F;upload.cgi<strong>。因此我们可以无条件访问</strong>upload.cgi**。</p>
+<p>同时上述配置文件中我们可以看到检查了**&#x2F;tmp&#x2F;websession&#x2F;token&#x2F;$cookie_sessionid<strong>文件是否存在。但是存在缺陷，就是这里的</strong>$cookie_sessionid<strong>是用户在</strong>http<strong>请求中传进去的一个值，它并没有检查是否存在</strong>..&#x2F;..&#x2F;<strong>，也就是说我们可以通过跨目录来导致授权绕过。如：我们可以传递</strong>..&#x2F;..&#x2F;..&#x2F;etc&#x2F;firmware_version**。</p>
+<p><img src="/img/Pwn2Own-Austin-2021-Cisco-Rv34x-RCE/1.png"></p>
+<p>同时也可以看到在<strong>upload.cgi</strong>里对<strong>sessionid&#x3D;<strong>进行了检查，限制了它的字符，但是并没有考虑到传多个</strong>sessionid&#x3D;<strong>的情况。因为这里的</strong>sessionid&#x3D;<strong>是遍历</strong>HTTP_COOKIE</strong>并且取出它最后一个<strong>sessionid&#x3D;<strong>作为实际的</strong>sessionid&#x3D;<strong>使用，所以我们可以传两个</strong>sessionid&#x3D;<strong>。前一个用来绕过</strong>web.upload.conf</strong>里的判断，后一个当作正常的数据用来通过<strong>upload.cgi</strong>的判断。这样也可以实现无条件访问<strong>upload.cgi</strong>。</p>
+<p>我们接着看<strong>upload.cgi</strong></p>
+<p><img src="/img/Pwn2Own-Austin-2021-Cisco-Rv34x-RCE/2.png"></p>
+<p>传入适当的参数可以使得我们有能力任意文件移动到**&#x2F;tmp&#x2F;www<strong>下，通过这两个漏洞我们也可以伪造出一个</strong>session**。</p>
+<h4 id="CVE-2022-20707-Command-Injection"><a href="#CVE-2022-20707-Command-Injection" class="headerlink" title="CVE-2022-20707 Command Injection"></a>CVE-2022-20707 Command Injection</h4><p>我们继续查看<strong>upload.cgi</strong>。</p>
+<p><img src="/img/Pwn2Own-Austin-2021-Cisco-Rv34x-RCE/3.png"></p>
+<p>这个漏洞可以使得任意命令执行。</p>
+<h3 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h3><p><a target="_blank" rel="noopener" href="https://bestwing.me/Pwning%20a%20Cisco%20RV340%20%20%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90%EF%BC%88CVE-2022-20705%20%E5%92%8C%20CVE-2022-20707.html">https://bestwing.me/Pwning%20a%20Cisco%20RV340%20%20%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90%EF%BC%88CVE-2022-20705%20%E5%92%8C%20CVE-2022-20707.html</a></p>
+<p><a target="_blank" rel="noopener" href="https://blog.relyze.com/2022/04/pwning-cisco-rv340-with-4-bug-chain.html">https://blog.relyze.com/2022/04/pwning-cisco-rv340-with-4-bug-chain.html</a></p>
+<p><a target="_blank" rel="noopener" href="https://paper.seebug.org/1890/">https://paper.seebug.org/1890/</a></p>
+<p><a target="_blank" rel="noopener" href="https://onekey.com/blog/advisory-cisco-rv34x-authentication-bypass-remote-command-execution/">https://onekey.com/blog/advisory-cisco-rv34x-authentication-bypass-remote-command-execution/</a></p>
+<p><a target="_blank" rel="noopener" href="https://nosec.org/home/detail/4985.html">https://nosec.org/home/detail/4985.html</a></p>
+<h3 id="文章首发"><a href="#文章首发" class="headerlink" title="文章首发"></a>文章首发</h3><p><a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s/2joZwexIdVdgc5NL8W3J-A">https://mp.weixin.qq.com/s/2joZwexIdVdgc5NL8W3J-A</a></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://fxc233.github.io/2023/11/06/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%BA%8C%E7%BB%93%E6%9D%9F/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="fxc233">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="fxc233's blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/11/06/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%BA%8C%E7%BB%93%E6%9D%9F/" class="post-title-link" itemprop="url">写在大二结束</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2023-11-06 14:14:04 / Modified: 17:41:20" itemprop="dateCreated datePublished" datetime="2023-11-06T14:14:04+08:00">2023-11-06</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>不知不觉一年又过去了，又到了写总结的时候。自从大一结束写了一篇名为**<a target="_blank" rel="noopener" href="https://www.cnblogs.com/pwnfeifei/p/16819275.html">写在大一结束</a><strong>的文章之后，我就在想当我写</strong>写在大二结束**时我的状态会是怎样的，会有什么样变化。不曾想过，时至今日笔者虽然感觉有很多话想说，有很多事都想记录下来，但是却突然又不知从何谈起。</p>
+<h3 id="文化课"><a href="#文化课" class="headerlink" title="文化课"></a>文化课</h3><p>看着这个小标题，突然不知该如何总结我大二这一年不尽人意的文化课结果(<del>虽然确实自己平时也没有好好听讲</del>)。总的来说是基本已经彻底和保研是彻底无缘了，考研的话基本上是不会去考虑了。不过好在每门也能勉强稳定在80分左右，并没有出现挂科的现象，这也许就是最大的幸运了，233。</p>
+<h3 id="CTF-RW"><a href="#CTF-RW" class="headerlink" title="CTF &amp; RW"></a>CTF &amp; RW</h3><p>由于没什么基础，感觉CTF这块一直没能打出什么好的成绩。面对师傅们出的各种各样的题，小弟我愈发感觉跟不上大师傅们的步伐。再加上搞实战的原因，也感觉自己与CTF越走越远。但是通过CTF，我认识了很多一样对CTF，对二进制安全感兴趣的师傅们，能与他们共同努力也是人生中一段精彩的旅程。此外，幸运的是，在大二这一学年的末尾，参加 <strong>XCTF-饶派杯车联网安全挑战赛</strong>时，在强力队友的带飞下，终于拿到了人生中第一个冠军。</p>
+<p>从大一下开始学习 <strong>IOT安全</strong>之后，一直把自己的重心放在漏洞挖掘这一块，偶尔心血来潮也会写一些轮子(<del>没啥用的轮子</del>)。也尝试写过 <strong>fuzz</strong>，不过经常在中途就感到自己这个fuzz是多么的辣鸡，于是它就夭折了。从挖一些简单洞，到逐渐可以获得一些中大型厂商的致谢，再到可以拿一些 <strong>bug bounty</strong>，确实会让自己产生一些小小的成就感，感觉有一点 <strong>nice</strong>。不过深知自己距离那些真正的大佬，仍然存在着遥不可及的距离。当然除了<strong>IOT</strong>，我也有着其他感兴趣的方向，如<strong>windows，浏览器</strong>等。所以，不出意外的话，从这学期开始，我会去尝试一些其他的方向，希望能有些不错的收获。也希望能在这个学年写出一个正常的 <strong>fuzz</strong>，能不能出 <strong>crash</strong>先不考虑，最起码能用起来。</p>
+<h3 id="暑期实习"><a href="#暑期实习" class="headerlink" title="暑期实习"></a>暑期实习</h3><p>由于没背过面经，基础也有些薄弱，面试时有些结巴，有些问题也答不上来，不过好在运气爆棚，获得了去长亭科技实习的机会。左边坐着某红队大佬，右边坐着我的 leader（exp师傅，真超级全能选手，啥都会的那种），夹在中间的我总显得格格不入。总的来说，长亭技术研究氛围确实超棒（<del>零食也很好吃</del>）。虽然仅在这里实习了短短两个月，却学到了很多东西，也有机会做了很多有意义的事。比如，成功挖到第一个大型工控系统的RCE，在天网杯中跟着大哥们挖到了自己第一个想挖了很久却一直没机会挖的打印机上的洞，也学到了和木马免杀有关的一些知识等等。再次给长亭的研究氛围点赞，如果你也对安全研究感兴趣，长亭科技绝对是一个很好的选择。</p>
+<h3 id="恋爱"><a href="#恋爱" class="headerlink" title="恋爱"></a>恋爱</h3><p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%BA%8C%E7%BB%93%E6%9D%9F/1.png"></p>
+<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%BA%8C%E7%BB%93%E6%9D%9F/2.png"></p>
+<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%BA%8C%E7%BB%93%E6%9D%9F/3.png"></p>
+<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%BA%8C%E7%BB%93%E6%9D%9F/4.png"></p>
+<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%BA%8C%E7%BB%93%E6%9D%9F/5.png"></p>
+<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%BA%8C%E7%BB%93%E6%9D%9F/6.png"></p>
+<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%BA%8C%E7%BB%93%E6%9D%9F/7.png"></p>
+<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%BA%8C%E7%BB%93%E6%9D%9F/8.png"></p>
+<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%BA%8C%E7%BB%93%E6%9D%9F/9.png"></p>
+<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%BA%8C%E7%BB%93%E6%9D%9F/10.png"></p>
+<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%BA%8C%E7%BB%93%E6%9D%9F/11.png"></p>
+<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%BA%8C%E7%BB%93%E6%9D%9F/12.png"></p>
+<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%BA%8C%E7%BB%93%E6%9D%9F/13.png"></p>
+<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%BA%8C%E7%BB%93%E6%9D%9F/14.png"></p>
+<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%BA%8C%E7%BB%93%E6%9D%9F/15.png"></p>
+<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%BA%8C%E7%BB%93%E6%9D%9F/16.png"></p>
+<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%BA%8C%E7%BB%93%E6%9D%9F/17.png"></p>
+<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%BA%8C%E7%BB%93%E6%9D%9F/18.png"></p>
+<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%BA%8C%E7%BB%93%E6%9D%9F/19.png"></p>
+<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%BA%8C%E7%BB%93%E6%9D%9F/20.png"></p>
+<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%BA%8C%E7%BB%93%E6%9D%9F/21.png"></p>
+<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%BA%8C%E7%BB%93%E6%9D%9F/22.png"></p>
+<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%BA%8C%E7%BB%93%E6%9D%9F/23.png"></p>
+<h3 id="未来憧憬"><a href="#未来憧憬" class="headerlink" title="未来憧憬"></a>未来憧憬</h3><p>能和对象一直走下去，实现一个 <strong>fuzz</strong>，拿到更多的 <strong>bug bounty</strong>。。。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://fxc233.github.io/2023/11/06/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%B8%80%E7%BB%93%E6%9D%9F/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="fxc233">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="fxc233's blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/11/06/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%B8%80%E7%BB%93%E6%9D%9F/" class="post-title-link" itemprop="url">写在大一结束</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2023-11-06 14:13:56 / Modified: 17:41:48" itemprop="dateCreated datePublished" datetime="2023-11-06T14:13:56+08:00">2023-11-06</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="写在大一结束"><a href="#写在大一结束" class="headerlink" title="写在大一结束"></a>写在大一结束</h1><h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>从大一没结束到大一刚结束放暑假再到暑假结束，一直都想着要写这篇文章，但是由于本人太喜欢咕咕咕而一直耽搁了，今天正好有时间来写本文，以此记录一下我的大一生涯。这大概是我第一篇记录生活的文章吧（不确定是不是最后一篇。</p>
+<h3 id="文化课"><a href="#文化课" class="headerlink" title="文化课"></a>文化课</h3><p>对于我这种喜欢躺平的人来说，不挂科就是我对自己文化课的要求了。像什么高数，线代，电工啥的，我都是能不听则不听，考试前临时抱佛脚，让自己不挂科即可。C，C++这些专业课的话感觉也就只是讲了些皮毛的知识，正真有用的东西还得自己去看。之后在自己高中所学的英语的buff加成下，虽然英语课很少听讲，但也还是勉强考过了四六级。</p>
+<h3 id="CTF竞赛"><a href="#CTF竞赛" class="headerlink" title="CTF竞赛"></a>CTF竞赛</h3><p>有幸在我高中学长(N1k0la)的推荐下，了解到了<code>CTF</code>这一竞赛，最后也投身于其中。对于我这种在大学前连电脑都很少触碰到的人来说，<code>CTF</code>对我无疑是很有挑战性的比赛。但是好在兴趣的驱使下，我最终选择了<code>pwn</code>这个方向，并且可以坚持到现在。在刚开始学习<code>pwn</code>的路上，我这种萌新遇到的困难也特别多，很多明明很简单的东西，对我来却是难以理解的东西，真庆幸当时没有直接选择放弃，而是慢慢在朝前走。在此也感谢所有在我成长过程中对我有所帮助的大师傅们，如<code>winmt</code>，及学长<code>影二，风沐云烟</code>等等。虽然学习的过程很痛苦，但是学到的知识却令我有所成就感。前段时间刚把<code>kernel,musl，llvm</code>这些部分的简单题看完，希望以后能在比赛中有所发挥。同时在大一也加入了我们南邮的校队–<code>X1cT34m</code>，遇到了实力很强的队友以及非常优秀的各位学长。</p>
+<h3 id="实战状况"><a href="#实战状况" class="headerlink" title="实战状况"></a>实战状况</h3><p><code>CTF</code>竞赛是入门安全的很有效的途径，但实战和竞赛之间还是存在差别的。有幸遇到了沙乐天导师（史上最硬核二进制副教授），在他的带领下我有机会慢慢的接触到了二进制的实战的运用。<br>实战的话大概目前接触的应该算是两个方面吧：<br>第一个就是接触了一些路由器这种简单硬件的漏洞挖掘，也获得了一些CVE，CNVD的编号，但挖的质量并不是很好，所以依旧需要不断提高。<br>第二个的话就是接触了污点分析这个项目，自己也写了一个污点分析的工具，对于我这种从没写过什么项目或工具的人来说，也算得上是一种进步吧。</p>
+<h3 id="暑期实习"><a href="#暑期实习" class="headerlink" title="暑期实习"></a>暑期实习</h3><p>怕自己在大一结束的暑假直接摆烂，凭借自己一丢丢的<code>CTF</code>竞赛经验及一丢丢的实战经历找了人生中的第一份实习，中国电信的天翼安全科技公司。感谢公司能让我这种菜鸟选手拿到这实习的机会，在实习过程中遇到了厉害的前辈以及其他优秀的实习生。在公司里我也体会到作为一个打工人的感觉，感觉公司里的氛围确实不错，也学到了很多东西。</p>
+<h3 id="恋爱"><a href="#恋爱" class="headerlink" title="恋爱"></a>恋爱</h3><p>在大一刚开始就找到了对象（高中校友），到今天算起来正好是<code>365</code>天。一路上也有吵吵闹闹，但还好走到了现在。在我的大一生涯中我的对象对我确实有很大的帮助和影响，在我感觉自己太菜的时候也有不断地鼓励我。最后希望我们能够一直走下去。贴几张出去玩的照片</p>
+<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%B8%80%E7%BB%93%E6%9D%9F/1.png"></p>
+<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%B8%80%E7%BB%93%E6%9D%9F/2.png"></p>
+<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%B8%80%E7%BB%93%E6%9D%9F/3.png"></p>
+<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%B8%80%E7%BB%93%E6%9D%9F/4.png"></p>
+<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%B8%80%E7%BB%93%E6%9D%9F/5.png"></p>
+<h3 id="憧憬未来"><a href="#憧憬未来" class="headerlink" title="憧憬未来"></a>憧憬未来</h3><p>文化课不挂科（当然分数能好看一些最好），<code>CTF</code>竞赛参加些较为大型的赛事并能有所输出，实战能有所成果，和对象一直走下去。</p>
+<h3 id="最后"><a href="#最后" class="headerlink" title="最后"></a>最后</h3><p>本人语文功底较差（毕竟高考语文没能及格），文章用词可能不太准确，语句可能也不通顺，还请大家见谅。打字好累，不想再写了，就以此文纪念我的大一生涯。</p>
 
       
     </div>
@@ -288,7 +557,7 @@
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/"><i class="fa fa-angle-left" aria-label="Previous page"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span>
+    <a class="extend prev" rel="prev" href="/"><i class="fa fa-angle-left" aria-label="Previous page"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><a class="extend next" rel="next" href="/page/3/"><i class="fa fa-angle-right" aria-label="Next page"></i></a>
   </nav>
 
 
@@ -354,7 +623,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">12</span>
+          <span class="site-state-item-count">13</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
