@@ -113,6 +113,11 @@
     <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
 
   </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
         <li class="menu-item menu-item-archives">
 
     <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
@@ -152,6 +157,83 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://fxc233.github.io/2023/11/06/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%B8%80%E7%BB%93%E6%9D%9F/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="fxc233">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="fxc233's blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/11/06/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%B8%80%E7%BB%93%E6%9D%9F/" class="post-title-link" itemprop="url">写在大一结束</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2023-11-06 14:13:56" itemprop="dateCreated datePublished" datetime="2023-11-06T14:13:56+08:00">2023-11-06</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2023-12-02 23:22:40" itemprop="dateModified" datetime="2023-12-02T23:22:40+08:00">2023-12-02</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="写在大一结束"><a href="#写在大一结束" class="headerlink" title="写在大一结束"></a>写在大一结束</h1><h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>从大一没结束到大一刚结束放暑假再到暑假结束，一直都想着要写这篇文章，但是由于本人太喜欢咕咕咕而一直耽搁了，今天正好有时间来写本文，以此记录一下我的大一生涯。这大概是我第一篇记录生活的文章吧（不确定是不是最后一篇。</p>
+<h3 id="文化课"><a href="#文化课" class="headerlink" title="文化课"></a>文化课</h3><p>对于我这种喜欢躺平的人来说，不挂科就是我对自己文化课的要求了。像什么高数，线代，电工啥的，我都是能不听则不听，考试前临时抱佛脚，让自己不挂科即可。C，C++这些专业课的话感觉也就只是讲了些皮毛的知识，正真有用的东西还得自己去看。之后在自己高中所学的英语的buff加成下，虽然英语课很少听讲，但也还是勉强考过了四六级。</p>
+<h3 id="CTF竞赛"><a href="#CTF竞赛" class="headerlink" title="CTF竞赛"></a>CTF竞赛</h3><p>有幸在我高中学长(N1k0la)的推荐下，了解到了<code>CTF</code>这一竞赛，最后也投身于其中。对于我这种在大学前连电脑都很少触碰到的人来说，<code>CTF</code>对我无疑是很有挑战性的比赛。但是好在兴趣的驱使下，我最终选择了<code>pwn</code>这个方向，并且可以坚持到现在。在刚开始学习<code>pwn</code>的路上，我这种萌新遇到的困难也特别多，很多明明很简单的东西，对我来却是难以理解的东西，真庆幸当时没有直接选择放弃，而是慢慢在朝前走。在此也感谢所有在我成长过程中对我有所帮助的大师傅们，如<code>winmt</code>，及学长<code>影二，风沐云烟</code>等等。虽然学习的过程很痛苦，但是学到的知识却令我有所成就感。前段时间刚把<code>kernel,musl，llvm</code>这些部分的简单题看完，希望以后能在比赛中有所发挥。同时在大一也加入了我们南邮的校队–<code>X1cT34m</code>，遇到了实力很强的队友以及非常优秀的各位学长。</p>
+<h3 id="实战状况"><a href="#实战状况" class="headerlink" title="实战状况"></a>实战状况</h3><p><code>CTF</code>竞赛是入门安全的很有效的途径，但实战和竞赛之间还是存在差别的。有幸遇到了沙乐天导师（史上最硬核二进制副教授），在他的带领下我有机会慢慢的接触到了二进制的实战的运用。<br>实战的话大概目前接触的应该算是两个方面吧：<br>第一个就是接触了一些路由器这种简单硬件的漏洞挖掘，也获得了一些CVE，CNVD的编号，但挖的质量并不是很好，所以依旧需要不断提高。<br>第二个的话就是接触了污点分析这个项目，自己也写了一个污点分析的工具，对于我这种从没写过什么项目或工具的人来说，也算得上是一种进步吧。</p>
+<h3 id="暑期实习"><a href="#暑期实习" class="headerlink" title="暑期实习"></a>暑期实习</h3><p>怕自己在大一结束的暑假直接摆烂，凭借自己一丢丢的<code>CTF</code>竞赛经验及一丢丢的实战经历找了人生中的第一份实习，中国电信的天翼安全科技公司。感谢公司能让我这种菜鸟选手拿到这实习的机会，在实习过程中遇到了厉害的前辈以及其他优秀的实习生。在公司里我也体会到作为一个打工人的感觉，感觉公司里的氛围确实不错，也学到了很多东西。</p>
+<h3 id="恋爱"><a href="#恋爱" class="headerlink" title="恋爱"></a>恋爱</h3><p>在大一刚开始就找到了对象（高中校友），到今天算起来正好是<code>365</code>天。一路上也有吵吵闹闹，但还好走到了现在。在我的大一生涯中我的对象对我确实有很大的帮助和影响，在我感觉自己太菜的时候也有不断地鼓励我。最后希望我们能够一直走下去。贴几张出去玩的照片</p>
+<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%B8%80%E7%BB%93%E6%9D%9F/1.png"></p>
+<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%B8%80%E7%BB%93%E6%9D%9F/2.png"></p>
+<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%B8%80%E7%BB%93%E6%9D%9F/3.png"></p>
+<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%B8%80%E7%BB%93%E6%9D%9F/4.png"></p>
+<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%B8%80%E7%BB%93%E6%9D%9F/5.png"></p>
+<h3 id="憧憬未来"><a href="#憧憬未来" class="headerlink" title="憧憬未来"></a>憧憬未来</h3><p>文化课不挂科（当然分数能好看一些最好），<code>CTF</code>竞赛参加些较为大型的赛事并能有所输出，实战能有所成果，和对象一直走下去。</p>
+<h3 id="最后"><a href="#最后" class="headerlink" title="最后"></a>最后</h3><p>本人语文功底较差（毕竟高考语文没能及格），文章用词可能不太准确，语句可能也不通顺，还请大家见谅。打字好累，不想再写了，就以此文纪念我的大一生涯。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="https://fxc233.github.io/2023/11/06/RealWorld-CTF-5th-Shellfind/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -175,10 +257,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2023-11-06 14:13:14 / Modified: 17:37:50" itemprop="dateCreated datePublished" datetime="2023-11-06T14:13:14+08:00">2023-11-06</time>
+              <time title="Created: 2023-11-06 14:13:14" itemprop="dateCreated datePublished" datetime="2023-11-06T14:13:14+08:00">2023-11-06</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2023-12-02 23:36:09" itemprop="dateModified" datetime="2023-12-02T23:36:09+08:00">2023-12-02</time>
+              </span>
 
           
 
@@ -288,10 +376,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2023-11-06 14:10:23 / Modified: 17:39:32" itemprop="dateCreated datePublished" datetime="2023-11-06T14:10:23+08:00">2023-11-06</time>
+              <time title="Created: 2023-11-06 14:10:23" itemprop="dateCreated datePublished" datetime="2023-11-06T14:10:23+08:00">2023-11-06</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2023-12-02 23:36:28" itemprop="dateModified" datetime="2023-12-02T23:36:28+08:00">2023-12-02</time>
+              </span>
 
           
 
@@ -467,9 +561,15 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">13</span>
+          <span class="site-state-item-count">14</span>
           <span class="site-state-item-name">posts</span>
         </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
 </div>

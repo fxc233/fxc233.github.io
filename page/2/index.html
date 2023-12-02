@@ -113,6 +113,11 @@
     <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
 
   </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
         <li class="menu-item menu-item-archives">
 
     <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
@@ -152,6 +157,105 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://fxc233.github.io/2023/11/06/%E4%BB%8E%E8%B7%AF%E7%94%B1%E5%99%A8%E7%9C%9F%E6%9C%BA%E6%8F%90%E5%8F%96%E5%9B%BA%E4%BB%B6%E5%8C%85%EF%BC%88%E4%B8%80%EF%BC%89/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="fxc233">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="fxc233's blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/11/06/%E4%BB%8E%E8%B7%AF%E7%94%B1%E5%99%A8%E7%9C%9F%E6%9C%BA%E6%8F%90%E5%8F%96%E5%9B%BA%E4%BB%B6%E5%8C%85%EF%BC%88%E4%B8%80%EF%BC%89/" class="post-title-link" itemprop="url">从路由器真机提取固件包（一）</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2023-11-06 14:19:46" itemprop="dateCreated datePublished" datetime="2023-11-06T14:19:46+08:00">2023-11-06</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2023-12-02 23:36:21" itemprop="dateModified" datetime="2023-12-02T23:36:21+08:00">2023-12-02</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>看<code>IOT</code>也有一段时间了，但是一直都是从官网获取固件包，没有尝试过从真机里提取固件。在看了一些师傅的文章后决定尝试一下从真机中提取固件。正好手里也有几个路由器，于是用刚到手的奖学金去买了提取固件所需要的工具用来学习一下如何通过串口调试获取固件。</p>
+<h3 id="所用到的工具及设备"><a href="#所用到的工具及设备" class="headerlink" title="所用到的工具及设备"></a>所用到的工具及设备</h3><ul>
+<li>FT232</li>
+<li>电烙铁</li>
+<li>杜邦线</li>
+<li>万用表</li>
+<li>xxx 路由器</li>
+<li>SecureCRT</li>
+</ul>
+<h3 id="前置知识"><a href="#前置知识" class="headerlink" title="前置知识"></a>前置知识</h3><h4 id="串口介绍"><a href="#串口介绍" class="headerlink" title="串口介绍"></a>串口介绍</h4><p>串口是一个泛称，UART、COM、TTL、RS232、RS485都遵循类似的通信时序协议，因此都被通称为串口。<br>而在嵌入式开发中所听到的串口一般指的是<code>UART</code>。<code>UART</code>使用的是异步串行通信，以字符为传输单位，一位一位的顺序输送；通信中两个字符间的时间间隔是不固定的 ，然而同一个字符内两个相邻位之间的时间间隔是固定的。数据的传送速率用波特率来表示，即每秒钟传送的二进制位数。一般选波特率都会有9600,19200,115200等，最常用的是115200。<br><code>UART</code>有四个<code>pin</code>，分别是<code>VCC,GND,RX,TX</code>，用的是<code>TTL</code>电平，低电平为<code>0V</code>，高电平为<code>3.3V-5V</code>。</p>
+<h5 id="UART-引脚介绍"><a href="#UART-引脚介绍" class="headerlink" title="UART 引脚介绍"></a>UART 引脚介绍</h5><ul>
+<li>VCC：供电pin，一般是3.3v，在我们的板子上没有过电保护，这个pin一般不接更安全(在路由器通电的时候可以不连VCC)。</li>
+<li>GND：接地pin，有的时候RX接受数据有问题，就要接上这个pin，一般也可不接。</li>
+<li>RX：接收数据pin。</li>
+<li>TX：发送数据pin。</li>
+</ul>
+<h4 id="UART-通信"><a href="#UART-通信" class="headerlink" title="UART 通信"></a>UART 通信</h4><p><code>UART</code>最好的一点是它只使用两根线就可以在设备之间传输数据。在<code>UART</code>通信中，两个<code>UART</code>直接相互通信。发送<code>UART</code>将来自<code>CPU</code>等控制设备的并行数据转换为串行形式，并将其串行发送到接收<code>UART</code>，接收<code>UART</code>然后将串行数据转换回接收设备的并行数据。在两个<code>UART</code>之间传输数据只需要两根线。数据从发送<code>UART</code>的<code>TX</code>引脚流向接收<code>UART</code>的<code>RX</code>引脚，也就是接受和发送数据的<code>UART</code>的<code>RX和TX</code>要反过来连接。</p>
+<h4 id="寻找-UART-串口，并定位-pin"><a href="#寻找-UART-串口，并定位-pin" class="headerlink" title="寻找 UART 串口，并定位 pin"></a>寻找 UART 串口，并定位 pin</h4><p>下图是笔者拆开<code>xxx 路由器</code>得到的板子，可以看到红色方框里有四个孔，这就是<code>UART</code>串口，并且这个板子很人性化已经给我们标好了引脚的名称。</p>
+<p><img src="/img/%E4%BB%8E%E8%B7%AF%E7%94%B1%E5%99%A8%E7%9C%9F%E6%9C%BA%E6%8F%90%E5%8F%96%E5%9B%BA%E4%BB%B6%E5%8C%85%EF%BC%88%E4%B8%80%EF%BC%89/1.png"></p>
+<p>如果没给我们标注好串口的名称，我们也可以通过万用表去定位每一个引脚。</p>
+<p>1、定位 <code>GND</code></p>
+<p>将万用表调到蜂鸣档，然后将黑表笔接到背面电源焊锡点，红表笔分别触碰<code>UART</code>四个引脚的焊接点。发出声响的就是<code>GND</code>引脚。</p>
+<p>2、定位 <code>VCC</code></p>
+<p>将万用表调到直流<code>20V</code>，然后将黑表笔放到刚刚判断的<code>GND</code>引脚上，再用红表笔触碰其他三个焊接点进行测试。电压稳定在<code>3.3V或5V</code>左右的那个引脚即为<code>VCC</code>引脚。</p>
+<p>3、定位 <code>TXD</code></p>
+<p>开机会出现数据传输，如果该引脚出现了电压变化，则该引脚是<code>TXD</code>。黑表笔放到刚刚判断的<code>GND</code>引脚上，重启路由器，用红表笔触碰其他两个引脚，电压发生变化的即为<code>TDX</code>。</p>
+<p>4、定位 <code>RXD</code></p>
+<p>确定了其他三个引脚之后，剩下的一个即为<code>RDX</code>。</p>
+<h3 id="实操"><a href="#实操" class="headerlink" title="实操"></a>实操</h3><h4 id="焊接并连接-UART-串口"><a href="#焊接并连接-UART-串口" class="headerlink" title="焊接并连接 UART 串口"></a>焊接并连接 UART 串口</h4><p>下图可以看到四个孔处已经被读者用电烙铁焊上了几根针，可以便于我们用杜邦线将板子与<code>FT232</code>相连接。</p>
+<p><img src="/img/%E4%BB%8E%E8%B7%AF%E7%94%B1%E5%99%A8%E7%9C%9F%E6%9C%BA%E6%8F%90%E5%8F%96%E5%9B%BA%E4%BB%B6%E5%8C%85%EF%BC%88%E4%B8%80%EF%BC%89/2.png"></p>
+<p>之后，我们用杜邦线把板子和<code>FT232</code>的<code>GND</code>相连，把两者的<code>RXD</code>与<code>TXD</code>反着连。（也就是板子的<code>RXD</code>与<code>FT23的TXD</code>相连，板子的<code>TXD</code>与<code>FT23的RXD</code>相连）注意：在板子通电后最好不要将两者的<code>VCC</code>相连，否则可能损坏设备。</p>
+<h4 id="提取固件"><a href="#提取固件" class="headerlink" title="提取固件"></a>提取固件</h4><p>在连接好<code>FT232</code>与板子上的串口之后，我选择使用<code>SecureCRT</code>连接进shell。在这里我们可以看出想要进入shell，那么我们必须有登录名和密码。所以通过shell提取固件有一定的局限性。要么该设备不需要账号密码就能登陆，要么知道该设备登陆的账号和密码。</p>
+<p><img src="/img/%E4%BB%8E%E8%B7%AF%E7%94%B1%E5%99%A8%E7%9C%9F%E6%9C%BA%E6%8F%90%E5%8F%96%E5%9B%BA%E4%BB%B6%E5%8C%85%EF%BC%88%E4%B8%80%EF%BC%89/3.png"></p>
+<p><img src="/img/%E4%BB%8E%E8%B7%AF%E7%94%B1%E5%99%A8%E7%9C%9F%E6%9C%BA%E6%8F%90%E5%8F%96%E5%9B%BA%E4%BB%B6%E5%8C%85%EF%BC%88%E4%B8%80%EF%BC%89/4.png"></p>
+<p>登陆上之后用<code>tftp</code>或者<code>nc</code>等方法即可将固件传出来。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="https://fxc233.github.io/2023/11/06/fdcalls-%E5%BF%AB%E9%80%9F%E6%8C%96%E6%8E%98%E8%AE%BE%E5%A4%87%E9%80%BB%E8%BE%91%E6%B4%9E%E6%96%B9%E6%B3%95%E5%88%86%E4%BA%AB/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -175,10 +279,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2023-11-06 14:17:31 / Modified: 17:36:12" itemprop="dateCreated datePublished" datetime="2023-11-06T14:17:31+08:00">2023-11-06</time>
+              <time title="Created: 2023-11-06 14:17:31" itemprop="dateCreated datePublished" datetime="2023-11-06T14:17:31+08:00">2023-11-06</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2023-12-02 23:36:52" itemprop="dateModified" datetime="2023-12-02T23:36:52+08:00">2023-12-02</time>
+              </span>
 
           
 
@@ -248,10 +358,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2023-11-06 14:17:02 / Modified: 17:35:28" itemprop="dateCreated datePublished" datetime="2023-11-06T14:17:02+08:00">2023-11-06</time>
+              <time title="Created: 2023-11-06 14:17:02" itemprop="dateCreated datePublished" datetime="2023-11-06T14:17:02+08:00">2023-11-06</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2023-12-02 23:37:24" itemprop="dateModified" datetime="2023-12-02T23:37:24+08:00">2023-12-02</time>
+              </span>
 
           
 
@@ -327,10 +443,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2023-11-06 14:16:09 / Modified: 17:36:40" itemprop="dateCreated datePublished" datetime="2023-11-06T14:16:09+08:00">2023-11-06</time>
+              <time title="Created: 2023-11-06 14:16:09" itemprop="dateCreated datePublished" datetime="2023-11-06T14:16:09+08:00">2023-11-06</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2023-12-02 23:36:02" itemprop="dateModified" datetime="2023-12-02T23:36:02+08:00">2023-12-02</time>
+              </span>
 
           
 
@@ -423,10 +545,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2023-11-06 14:14:04 / Modified: 17:41:20" itemprop="dateCreated datePublished" datetime="2023-11-06T14:14:04+08:00">2023-11-06</time>
+              <time title="Created: 2023-11-06 14:14:04" itemprop="dateCreated datePublished" datetime="2023-11-06T14:14:04+08:00">2023-11-06</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2023-12-02 23:32:49" itemprop="dateModified" datetime="2023-12-02T23:32:49+08:00">2023-12-02</time>
+              </span>
 
           
 
@@ -468,77 +596,6 @@
 <p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%BA%8C%E7%BB%93%E6%9D%9F/22.png"></p>
 <p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%BA%8C%E7%BB%93%E6%9D%9F/23.png"></p>
 <h3 id="未来憧憬"><a href="#未来憧憬" class="headerlink" title="未来憧憬"></a>未来憧憬</h3><p>能和对象一直走下去，实现一个 <strong>fuzz</strong>，拿到更多的 <strong>bug bounty</strong>。。。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="https://fxc233.github.io/2023/11/06/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%B8%80%E7%BB%93%E6%9D%9F/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="fxc233">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="fxc233's blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/11/06/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%B8%80%E7%BB%93%E6%9D%9F/" class="post-title-link" itemprop="url">写在大一结束</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-              
-
-              <time title="Created: 2023-11-06 14:13:56 / Modified: 17:41:48" itemprop="dateCreated datePublished" datetime="2023-11-06T14:13:56+08:00">2023-11-06</time>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="写在大一结束"><a href="#写在大一结束" class="headerlink" title="写在大一结束"></a>写在大一结束</h1><h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>从大一没结束到大一刚结束放暑假再到暑假结束，一直都想着要写这篇文章，但是由于本人太喜欢咕咕咕而一直耽搁了，今天正好有时间来写本文，以此记录一下我的大一生涯。这大概是我第一篇记录生活的文章吧（不确定是不是最后一篇。</p>
-<h3 id="文化课"><a href="#文化课" class="headerlink" title="文化课"></a>文化课</h3><p>对于我这种喜欢躺平的人来说，不挂科就是我对自己文化课的要求了。像什么高数，线代，电工啥的，我都是能不听则不听，考试前临时抱佛脚，让自己不挂科即可。C，C++这些专业课的话感觉也就只是讲了些皮毛的知识，正真有用的东西还得自己去看。之后在自己高中所学的英语的buff加成下，虽然英语课很少听讲，但也还是勉强考过了四六级。</p>
-<h3 id="CTF竞赛"><a href="#CTF竞赛" class="headerlink" title="CTF竞赛"></a>CTF竞赛</h3><p>有幸在我高中学长(N1k0la)的推荐下，了解到了<code>CTF</code>这一竞赛，最后也投身于其中。对于我这种在大学前连电脑都很少触碰到的人来说，<code>CTF</code>对我无疑是很有挑战性的比赛。但是好在兴趣的驱使下，我最终选择了<code>pwn</code>这个方向，并且可以坚持到现在。在刚开始学习<code>pwn</code>的路上，我这种萌新遇到的困难也特别多，很多明明很简单的东西，对我来却是难以理解的东西，真庆幸当时没有直接选择放弃，而是慢慢在朝前走。在此也感谢所有在我成长过程中对我有所帮助的大师傅们，如<code>winmt</code>，及学长<code>影二，风沐云烟</code>等等。虽然学习的过程很痛苦，但是学到的知识却令我有所成就感。前段时间刚把<code>kernel,musl，llvm</code>这些部分的简单题看完，希望以后能在比赛中有所发挥。同时在大一也加入了我们南邮的校队–<code>X1cT34m</code>，遇到了实力很强的队友以及非常优秀的各位学长。</p>
-<h3 id="实战状况"><a href="#实战状况" class="headerlink" title="实战状况"></a>实战状况</h3><p><code>CTF</code>竞赛是入门安全的很有效的途径，但实战和竞赛之间还是存在差别的。有幸遇到了沙乐天导师（史上最硬核二进制副教授），在他的带领下我有机会慢慢的接触到了二进制的实战的运用。<br>实战的话大概目前接触的应该算是两个方面吧：<br>第一个就是接触了一些路由器这种简单硬件的漏洞挖掘，也获得了一些CVE，CNVD的编号，但挖的质量并不是很好，所以依旧需要不断提高。<br>第二个的话就是接触了污点分析这个项目，自己也写了一个污点分析的工具，对于我这种从没写过什么项目或工具的人来说，也算得上是一种进步吧。</p>
-<h3 id="暑期实习"><a href="#暑期实习" class="headerlink" title="暑期实习"></a>暑期实习</h3><p>怕自己在大一结束的暑假直接摆烂，凭借自己一丢丢的<code>CTF</code>竞赛经验及一丢丢的实战经历找了人生中的第一份实习，中国电信的天翼安全科技公司。感谢公司能让我这种菜鸟选手拿到这实习的机会，在实习过程中遇到了厉害的前辈以及其他优秀的实习生。在公司里我也体会到作为一个打工人的感觉，感觉公司里的氛围确实不错，也学到了很多东西。</p>
-<h3 id="恋爱"><a href="#恋爱" class="headerlink" title="恋爱"></a>恋爱</h3><p>在大一刚开始就找到了对象（高中校友），到今天算起来正好是<code>365</code>天。一路上也有吵吵闹闹，但还好走到了现在。在我的大一生涯中我的对象对我确实有很大的帮助和影响，在我感觉自己太菜的时候也有不断地鼓励我。最后希望我们能够一直走下去。贴几张出去玩的照片</p>
-<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%B8%80%E7%BB%93%E6%9D%9F/1.png"></p>
-<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%B8%80%E7%BB%93%E6%9D%9F/2.png"></p>
-<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%B8%80%E7%BB%93%E6%9D%9F/3.png"></p>
-<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%B8%80%E7%BB%93%E6%9D%9F/4.png"></p>
-<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%B8%80%E7%BB%93%E6%9D%9F/5.png"></p>
-<h3 id="憧憬未来"><a href="#憧憬未来" class="headerlink" title="憧憬未来"></a>憧憬未来</h3><p>文化课不挂科（当然分数能好看一些最好），<code>CTF</code>竞赛参加些较为大型的赛事并能有所输出，实战能有所成果，和对象一直走下去。</p>
-<h3 id="最后"><a href="#最后" class="headerlink" title="最后"></a>最后</h3><p>本人语文功底较差（毕竟高考语文没能及格），文章用词可能不太准确，语句可能也不通顺，还请大家见谅。打字好累，不想再写了，就以此文纪念我的大一生涯。</p>
 
       
     </div>
@@ -623,9 +680,15 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">13</span>
+          <span class="site-state-item-count">14</span>
           <span class="site-state-item-name">posts</span>
         </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
 </div>

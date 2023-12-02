@@ -20,24 +20,22 @@
     var CONFIG = {"hostname":"fxc233.github.io","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="前几天打了datacon，需要寻找埋在二进制文件里的漏洞。一种不错的方式是找两个版本靠近二进制文件进行diff一下。之前笔者都是通过bindiff+ghidra来进行diff二进制文件的，对于看习惯了IDA界面的我而言，总感觉ghidra界面看起来不够舒服。于是找到了diaphora这个IDA的插件（项目地址：https:&#x2F;&#x2F;github.com&#x2F;joxeankoret&#x2F;diaphora ），专门">
+  <meta name="description" content="零零散散用过几次docker，不过由于使用次数少，所以经常会忘记它的命令，这次系统地整理并记录一下常用的指令。 镜像相关查看镜像1docker image ls  拉取镜像1docker pull image_name  删除镜像1docker rmi image_id  容器相关创建并启动容器1docker run -it --name&#x3D;&quot;xxx&quot; -v &#x2F;local_pat">
 <meta property="og:type" content="article">
-<meta property="og:title" content="IDA-diff插件-diaphora使用">
-<meta property="og:url" content="https://fxc233.github.io/2023/11/20/IDA-diff%E6%8F%92%E4%BB%B6-diaphora%E4%BD%BF%E7%94%A8/index.html">
+<meta property="og:title" content="docker小记">
+<meta property="og:url" content="https://fxc233.github.io/2023/12/02/docker%E5%B0%8F%E8%AE%B0/index.html">
 <meta property="og:site_name" content="fxc233&#39;s blog">
-<meta property="og:description" content="前几天打了datacon，需要寻找埋在二进制文件里的漏洞。一种不错的方式是找两个版本靠近二进制文件进行diff一下。之前笔者都是通过bindiff+ghidra来进行diff二进制文件的，对于看习惯了IDA界面的我而言，总感觉ghidra界面看起来不够舒服。于是找到了diaphora这个IDA的插件（项目地址：https:&#x2F;&#x2F;github.com&#x2F;joxeankoret&#x2F;diaphora ），专门">
+<meta property="og:description" content="零零散散用过几次docker，不过由于使用次数少，所以经常会忘记它的命令，这次系统地整理并记录一下常用的指令。 镜像相关查看镜像1docker image ls  拉取镜像1docker pull image_name  删除镜像1docker rmi image_id  容器相关创建并启动容器1docker run -it --name&#x3D;&quot;xxx&quot; -v &#x2F;local_pat">
 <meta property="og:locale" content="en_US">
-<meta property="og:image" content="https://fxc233.github.io/img/IDA-diff%E6%8F%92%E4%BB%B6-diaphora%E4%BD%BF%E7%94%A8/1.png">
-<meta property="og:image" content="https://fxc233.github.io/img/IDA-diff%E6%8F%92%E4%BB%B6-diaphora%E4%BD%BF%E7%94%A8/2.png">
-<meta property="og:image" content="https://fxc233.github.io/img/IDA-diff%E6%8F%92%E4%BB%B6-diaphora%E4%BD%BF%E7%94%A8/3.png">
-<meta property="article:published_time" content="2023-11-20T01:32:15.000Z">
-<meta property="article:modified_time" content="2023-12-02T15:36:41.790Z">
+<meta property="og:image" content="https://fxc233.github.io/img/docker%E5%B0%8F%E8%AE%B0/1.png">
+<meta property="article:published_time" content="2023-12-02T15:11:13.000Z">
+<meta property="article:modified_time" content="2023-12-02T15:36:59.943Z">
 <meta property="article:author" content="fxc233">
 <meta property="article:tag" content="tools">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://fxc233.github.io/img/IDA-diff%E6%8F%92%E4%BB%B6-diaphora%E4%BD%BF%E7%94%A8/1.png">
+<meta name="twitter:image" content="https://fxc233.github.io/img/docker%E5%B0%8F%E8%AE%B0/1.png">
 
-<link rel="canonical" href="https://fxc233.github.io/2023/11/20/IDA-diff%E6%8F%92%E4%BB%B6-diaphora%E4%BD%BF%E7%94%A8/">
+<link rel="canonical" href="https://fxc233.github.io/2023/12/02/docker%E5%B0%8F%E8%AE%B0/">
 
 
 <script id="page-configurations">
@@ -50,7 +48,7 @@
   };
 </script>
 
-  <title>IDA-diff插件-diaphora使用 | fxc233's blog</title>
+  <title>docker小记 | fxc233's blog</title>
   
 
 
@@ -167,7 +165,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="https://fxc233.github.io/2023/11/20/IDA-diff%E6%8F%92%E4%BB%B6-diaphora%E4%BD%BF%E7%94%A8/">
+    <link itemprop="mainEntityOfPage" href="https://fxc233.github.io/2023/12/02/docker%E5%B0%8F%E8%AE%B0/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
@@ -180,7 +178,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          IDA-diff插件-diaphora使用
+          docker小记
         </h1>
 
         <div class="post-meta">
@@ -189,16 +187,10 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
+              
 
-              <time title="Created: 2023-11-20 09:32:15" itemprop="dateCreated datePublished" datetime="2023-11-20T09:32:15+08:00">2023-11-20</time>
+              <time title="Created: 2023-12-02 23:11:13 / Modified: 23:36:59" itemprop="dateCreated datePublished" datetime="2023-12-02T23:11:13+08:00">2023-12-02</time>
             </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2023-12-02 23:36:41" itemprop="dateModified" datetime="2023-12-02T23:36:41+08:00">2023-12-02</time>
-              </span>
 
           
 
@@ -211,13 +203,25 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <p>前几天打了<strong>datacon</strong>，需要寻找埋在二进制文件里的漏洞。一种不错的方式是找两个版本靠近二进制文件进行<strong>diff</strong>一下。之前笔者都是通过<strong>bindiff+ghidra</strong>来进行<strong>diff</strong>二进制文件的，对于看习惯了<strong>IDA</strong>界面的我而言，总感觉<strong>ghidra</strong>界面看起来不够舒服。于是找到了<strong>diaphora</strong>这个<strong>IDA</strong>的插件（项目地址：<a target="_blank" rel="noopener" href="https://github.com/joxeankoret/diaphora">https://github.com/joxeankoret/diaphora</a> ），专门用来对二进制文件进行<strong>diff</strong>，使用起来也极为简单便捷。这这里记录一下使用方法。</p>
-<p>首先用<strong>IDA</strong>打开第一个二进制文件，File-&gt;Script file里选择<strong>diaphora.py</strong>。弹出<strong>Diaphora</strong>界面后直接点击OK，把第一个文件的数据导入数据库中，记住sqlite的位置。等待<strong>Diaphora</strong>运行完毕之后，即可关闭第一个IDA界面。</p>
-<p><img src="/img/IDA-diff%E6%8F%92%E4%BB%B6-diaphora%E4%BD%BF%E7%94%A8/1.png"></p>
-<p>然后用<strong>IDA</strong>打开第二个二进制文件，用同样的方式运行<strong>diaphora.py</strong>之后，把刚才生成的sqlite的路径填到，<strong>SQLite database to diff against</strong>中，再点击OK运行。</p>
-<p><img src="/img/IDA-diff%E6%8F%92%E4%BB%B6-diaphora%E4%BD%BF%E7%94%A8/2.png"></p>
-<p>运行完成之后即可看到<strong>diff</strong>的结果，看起来很舒服。</p>
-<p><img src="/img/IDA-diff%E6%8F%92%E4%BB%B6-diaphora%E4%BD%BF%E7%94%A8/3.png"></p>
+        <p>零零散散用过几次<strong>docker</strong>，不过由于使用次数少，所以经常会忘记它的命令，这次系统地整理并记录一下常用的指令。</p>
+<h2 id="镜像相关"><a href="#镜像相关" class="headerlink" title="镜像相关"></a>镜像相关</h2><h3 id="查看镜像"><a href="#查看镜像" class="headerlink" title="查看镜像"></a>查看镜像</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker image ls</span><br></pre></td></tr></table></figure>
+
+<h3 id="拉取镜像"><a href="#拉取镜像" class="headerlink" title="拉取镜像"></a>拉取镜像</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker pull image_name</span><br></pre></td></tr></table></figure>
+
+<h3 id="删除镜像"><a href="#删除镜像" class="headerlink" title="删除镜像"></a>删除镜像</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker rmi image_id</span><br></pre></td></tr></table></figure>
+
+<h2 id="容器相关"><a href="#容器相关" class="headerlink" title="容器相关"></a>容器相关</h2><h3 id="创建并启动容器"><a href="#创建并启动容器" class="headerlink" title="创建并启动容器"></a>创建并启动容器</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run -it --name=&quot;xxx&quot; -v /local_path:/docker_path image_id /bin/sh</span><br></pre></td></tr></table></figure>
+
+<h3 id="启动-停止容器"><a href="#启动-停止容器" class="headerlink" title="启动&#x2F;停止容器"></a>启动&#x2F;停止容器</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker start/stop container_id</span><br></pre></td></tr></table></figure>
+
+<h3 id="删除容器"><a href="#删除容器" class="headerlink" title="删除容器"></a>删除容器</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker rm container_id</span><br></pre></td></tr></table></figure>
+
+<h3 id="进入容器"><a href="#进入容器" class="headerlink" title="进入容器"></a>进入容器</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker exec -it container_id /bin/sh</span><br></pre></td></tr></table></figure>
+
+<h2 id="Docker-镜像制作"><a href="#Docker-镜像制作" class="headerlink" title="Docker 镜像制作"></a>Docker 镜像制作</h2><h3 id="容器转为镜像"><a href="#容器转为镜像" class="headerlink" title="容器转为镜像"></a>容器转为镜像</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker commit container_id image_name:version</span><br></pre></td></tr></table></figure>
+
+<h2 id="编辑文件"><a href="#编辑文件" class="headerlink" title="编辑文件"></a>编辑文件</h2><p><strong>Vscode</strong>下载<strong>Remote-ssh</strong>和<strong>Docker</strong>插件，之后就可以远程连上去进行编辑。</p>
+<p><img src="/img/docker%E5%B0%8F%E8%AE%B0/1.png"></p>
 
     </div>
 
@@ -236,13 +240,10 @@
         
     <div class="post-nav">
       <div class="post-nav-item">
-    <a href="/2023/11/06/CVE-2023-27997-FortiGate-SSLVPN-HeapOverflow/" rel="prev" title="CVE-2023-27997-FortiGate-SSLVPN-HeapOverflow">
-      <i class="fa fa-chevron-left"></i> CVE-2023-27997-FortiGate-SSLVPN-HeapOverflow
+    <a href="/2023/11/20/IDA-diff%E6%8F%92%E4%BB%B6-diaphora%E4%BD%BF%E7%94%A8/" rel="prev" title="IDA-diff插件-diaphora使用">
+      <i class="fa fa-chevron-left"></i> IDA-diff插件-diaphora使用
     </a></div>
-      <div class="post-nav-item">
-    <a href="/2023/12/02/docker%E5%B0%8F%E8%AE%B0/" rel="next" title="docker小记">
-      docker小记 <i class="fa fa-chevron-right"></i>
-    </a></div>
+      <div class="post-nav-item"></div>
     </div>
       </footer>
     
@@ -301,6 +302,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%95%9C%E5%83%8F%E7%9B%B8%E5%85%B3"><span class="nav-number">1.</span> <span class="nav-text">镜像相关</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9F%A5%E7%9C%8B%E9%95%9C%E5%83%8F"><span class="nav-number">1.1.</span> <span class="nav-text">查看镜像</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8B%89%E5%8F%96%E9%95%9C%E5%83%8F"><span class="nav-number">1.2.</span> <span class="nav-text">拉取镜像</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%A0%E9%99%A4%E9%95%9C%E5%83%8F"><span class="nav-number">1.3.</span> <span class="nav-text">删除镜像</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%B9%E5%99%A8%E7%9B%B8%E5%85%B3"><span class="nav-number">2.</span> <span class="nav-text">容器相关</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%9B%E5%BB%BA%E5%B9%B6%E5%90%AF%E5%8A%A8%E5%AE%B9%E5%99%A8"><span class="nav-number">2.1.</span> <span class="nav-text">创建并启动容器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%90%AF%E5%8A%A8-%E5%81%9C%E6%AD%A2%E5%AE%B9%E5%99%A8"><span class="nav-number">2.2.</span> <span class="nav-text">启动&#x2F;停止容器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%A0%E9%99%A4%E5%AE%B9%E5%99%A8"><span class="nav-number">2.3.</span> <span class="nav-text">删除容器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%9B%E5%85%A5%E5%AE%B9%E5%99%A8"><span class="nav-number">2.4.</span> <span class="nav-text">进入容器</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Docker-%E9%95%9C%E5%83%8F%E5%88%B6%E4%BD%9C"><span class="nav-number">3.</span> <span class="nav-text">Docker 镜像制作</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%B9%E5%99%A8%E8%BD%AC%E4%B8%BA%E9%95%9C%E5%83%8F"><span class="nav-number">3.1.</span> <span class="nav-text">容器转为镜像</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%96%E8%BE%91%E6%96%87%E4%BB%B6"><span class="nav-number">4.</span> <span class="nav-text">编辑文件</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 

@@ -113,6 +113,11 @@
     <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
 
   </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
         <li class="menu-item menu-item-archives">
 
     <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
@@ -152,6 +157,83 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://fxc233.github.io/2023/12/02/docker%E5%B0%8F%E8%AE%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="fxc233">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="fxc233's blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/12/02/docker%E5%B0%8F%E8%AE%B0/" class="post-title-link" itemprop="url">docker小记</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2023-12-02 23:11:13 / Modified: 23:36:59" itemprop="dateCreated datePublished" datetime="2023-12-02T23:11:13+08:00">2023-12-02</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>零零散散用过几次<strong>docker</strong>，不过由于使用次数少，所以经常会忘记它的命令，这次系统地整理并记录一下常用的指令。</p>
+<h2 id="镜像相关"><a href="#镜像相关" class="headerlink" title="镜像相关"></a>镜像相关</h2><h3 id="查看镜像"><a href="#查看镜像" class="headerlink" title="查看镜像"></a>查看镜像</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker image ls</span><br></pre></td></tr></table></figure>
+
+<h3 id="拉取镜像"><a href="#拉取镜像" class="headerlink" title="拉取镜像"></a>拉取镜像</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker pull image_name</span><br></pre></td></tr></table></figure>
+
+<h3 id="删除镜像"><a href="#删除镜像" class="headerlink" title="删除镜像"></a>删除镜像</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker rmi image_id</span><br></pre></td></tr></table></figure>
+
+<h2 id="容器相关"><a href="#容器相关" class="headerlink" title="容器相关"></a>容器相关</h2><h3 id="创建并启动容器"><a href="#创建并启动容器" class="headerlink" title="创建并启动容器"></a>创建并启动容器</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run -it --name=&quot;xxx&quot; -v /local_path:/docker_path image_id /bin/sh</span><br></pre></td></tr></table></figure>
+
+<h3 id="启动-停止容器"><a href="#启动-停止容器" class="headerlink" title="启动&#x2F;停止容器"></a>启动&#x2F;停止容器</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker start/stop container_id</span><br></pre></td></tr></table></figure>
+
+<h3 id="删除容器"><a href="#删除容器" class="headerlink" title="删除容器"></a>删除容器</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker rm container_id</span><br></pre></td></tr></table></figure>
+
+<h3 id="进入容器"><a href="#进入容器" class="headerlink" title="进入容器"></a>进入容器</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker exec -it container_id /bin/sh</span><br></pre></td></tr></table></figure>
+
+<h2 id="Docker-镜像制作"><a href="#Docker-镜像制作" class="headerlink" title="Docker 镜像制作"></a>Docker 镜像制作</h2><h3 id="容器转为镜像"><a href="#容器转为镜像" class="headerlink" title="容器转为镜像"></a>容器转为镜像</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker commit container_id image_name:version</span><br></pre></td></tr></table></figure>
+
+<h2 id="编辑文件"><a href="#编辑文件" class="headerlink" title="编辑文件"></a>编辑文件</h2><p><strong>Vscode</strong>下载<strong>Remote-ssh</strong>和<strong>Docker</strong>插件，之后就可以远程连上去进行编辑。</p>
+<p><img src="/img/docker%E5%B0%8F%E8%AE%B0/1.png"></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="https://fxc233.github.io/2023/11/20/IDA-diff%E6%8F%92%E4%BB%B6-diaphora%E4%BD%BF%E7%94%A8/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -175,10 +257,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2023-11-20 09:32:15 / Modified: 10:21:44" itemprop="dateCreated datePublished" datetime="2023-11-20T09:32:15+08:00">2023-11-20</time>
+              <time title="Created: 2023-11-20 09:32:15" itemprop="dateCreated datePublished" datetime="2023-11-20T09:32:15+08:00">2023-11-20</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2023-12-02 23:36:41" itemprop="dateModified" datetime="2023-12-02T23:36:41+08:00">2023-12-02</time>
+              </span>
 
           
 
@@ -240,10 +328,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2023-11-06 14:22:07 / Modified: 14:42:18" itemprop="dateCreated datePublished" datetime="2023-11-06T14:22:07+08:00">2023-11-06</time>
+              <time title="Created: 2023-11-06 14:22:07" itemprop="dateCreated datePublished" datetime="2023-11-06T14:22:07+08:00">2023-11-06</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2023-12-02 23:37:08" itemprop="dateModified" datetime="2023-12-02T23:37:08+08:00">2023-12-02</time>
+              </span>
 
           
 
@@ -324,10 +418,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2023-11-06 14:20:58 / Modified: 14:53:09" itemprop="dateCreated datePublished" datetime="2023-11-06T14:20:58+08:00">2023-11-06</time>
+              <time title="Created: 2023-11-06 14:20:58" itemprop="dateCreated datePublished" datetime="2023-11-06T14:20:58+08:00">2023-11-06</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2023-12-02 23:37:17" itemprop="dateModified" datetime="2023-12-02T23:37:17+08:00">2023-12-02</time>
+              </span>
 
           
 
@@ -405,10 +505,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2023-11-06 14:20:17 / Modified: 17:38:19" itemprop="dateCreated datePublished" datetime="2023-11-06T14:20:17+08:00">2023-11-06</time>
+              <time title="Created: 2023-11-06 14:20:17" itemprop="dateCreated datePublished" datetime="2023-11-06T14:20:17+08:00">2023-11-06</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2023-12-02 23:36:15" itemprop="dateModified" datetime="2023-12-02T23:36:15+08:00">2023-12-02</time>
+              </span>
 
           
 
@@ -443,99 +549,6 @@
 <h3 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h3><p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/33527131">https://zhuanlan.zhihu.com/p/33527131</a></p>
 <p><a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s?__biz=MzUzNDYxOTA1NA==&mid=2247491223&idx=4&sn=39016ad70598e64c0a74b4bf08d223c9&chksm=fa90a856cde7214079b273bba8997e9c4cbabfde2fc1ff287fd6dd0d175223b3954fe37f9a88&scene=27">https://mp.weixin.qq.com/s?__biz=MzUzNDYxOTA1NA==&amp;mid=2247491223&amp;idx=4&amp;sn=39016ad70598e64c0a74b4bf08d223c9&amp;chksm=fa90a856cde7214079b273bba8997e9c4cbabfde2fc1ff287fd6dd0d175223b3954fe37f9a88&amp;scene=27</a></p>
 <p><a target="_blank" rel="noopener" href="https://blog.csdn.net/weixin_39224267/article/details/124661034">https://blog.csdn.net/weixin_39224267/article/details/124661034</a></p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="https://fxc233.github.io/2023/11/06/%E4%BB%8E%E8%B7%AF%E7%94%B1%E5%99%A8%E7%9C%9F%E6%9C%BA%E6%8F%90%E5%8F%96%E5%9B%BA%E4%BB%B6%E5%8C%85%EF%BC%88%E4%B8%80%EF%BC%89/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="fxc233">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="fxc233's blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/11/06/%E4%BB%8E%E8%B7%AF%E7%94%B1%E5%99%A8%E7%9C%9F%E6%9C%BA%E6%8F%90%E5%8F%96%E5%9B%BA%E4%BB%B6%E5%8C%85%EF%BC%88%E4%B8%80%EF%BC%89/" class="post-title-link" itemprop="url">从路由器真机提取固件包（一）</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-              
-
-              <time title="Created: 2023-11-06 14:19:46 / Modified: 17:38:46" itemprop="dateCreated datePublished" datetime="2023-11-06T14:19:46+08:00">2023-11-06</time>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>看<code>IOT</code>也有一段时间了，但是一直都是从官网获取固件包，没有尝试过从真机里提取固件。在看了一些师傅的文章后决定尝试一下从真机中提取固件。正好手里也有几个路由器，于是用刚到手的奖学金去买了提取固件所需要的工具用来学习一下如何通过串口调试获取固件。</p>
-<h3 id="所用到的工具及设备"><a href="#所用到的工具及设备" class="headerlink" title="所用到的工具及设备"></a>所用到的工具及设备</h3><ul>
-<li>FT232</li>
-<li>电烙铁</li>
-<li>杜邦线</li>
-<li>万用表</li>
-<li>xxx 路由器</li>
-<li>SecureCRT</li>
-</ul>
-<h3 id="前置知识"><a href="#前置知识" class="headerlink" title="前置知识"></a>前置知识</h3><h4 id="串口介绍"><a href="#串口介绍" class="headerlink" title="串口介绍"></a>串口介绍</h4><p>串口是一个泛称，UART、COM、TTL、RS232、RS485都遵循类似的通信时序协议，因此都被通称为串口。<br>而在嵌入式开发中所听到的串口一般指的是<code>UART</code>。<code>UART</code>使用的是异步串行通信，以字符为传输单位，一位一位的顺序输送；通信中两个字符间的时间间隔是不固定的 ，然而同一个字符内两个相邻位之间的时间间隔是固定的。数据的传送速率用波特率来表示，即每秒钟传送的二进制位数。一般选波特率都会有9600,19200,115200等，最常用的是115200。<br><code>UART</code>有四个<code>pin</code>，分别是<code>VCC,GND,RX,TX</code>，用的是<code>TTL</code>电平，低电平为<code>0V</code>，高电平为<code>3.3V-5V</code>。</p>
-<h5 id="UART-引脚介绍"><a href="#UART-引脚介绍" class="headerlink" title="UART 引脚介绍"></a>UART 引脚介绍</h5><ul>
-<li>VCC：供电pin，一般是3.3v，在我们的板子上没有过电保护，这个pin一般不接更安全(在路由器通电的时候可以不连VCC)。</li>
-<li>GND：接地pin，有的时候RX接受数据有问题，就要接上这个pin，一般也可不接。</li>
-<li>RX：接收数据pin。</li>
-<li>TX：发送数据pin。</li>
-</ul>
-<h4 id="UART-通信"><a href="#UART-通信" class="headerlink" title="UART 通信"></a>UART 通信</h4><p><code>UART</code>最好的一点是它只使用两根线就可以在设备之间传输数据。在<code>UART</code>通信中，两个<code>UART</code>直接相互通信。发送<code>UART</code>将来自<code>CPU</code>等控制设备的并行数据转换为串行形式，并将其串行发送到接收<code>UART</code>，接收<code>UART</code>然后将串行数据转换回接收设备的并行数据。在两个<code>UART</code>之间传输数据只需要两根线。数据从发送<code>UART</code>的<code>TX</code>引脚流向接收<code>UART</code>的<code>RX</code>引脚，也就是接受和发送数据的<code>UART</code>的<code>RX和TX</code>要反过来连接。</p>
-<h4 id="寻找-UART-串口，并定位-pin"><a href="#寻找-UART-串口，并定位-pin" class="headerlink" title="寻找 UART 串口，并定位 pin"></a>寻找 UART 串口，并定位 pin</h4><p>下图是笔者拆开<code>xxx 路由器</code>得到的板子，可以看到红色方框里有四个孔，这就是<code>UART</code>串口，并且这个板子很人性化已经给我们标好了引脚的名称。</p>
-<p><img src="/img/%E4%BB%8E%E8%B7%AF%E7%94%B1%E5%99%A8%E7%9C%9F%E6%9C%BA%E6%8F%90%E5%8F%96%E5%9B%BA%E4%BB%B6%E5%8C%85%EF%BC%88%E4%B8%80%EF%BC%89/1.png"></p>
-<p>如果没给我们标注好串口的名称，我们也可以通过万用表去定位每一个引脚。</p>
-<p>1、定位 <code>GND</code></p>
-<p>将万用表调到蜂鸣档，然后将黑表笔接到背面电源焊锡点，红表笔分别触碰<code>UART</code>四个引脚的焊接点。发出声响的就是<code>GND</code>引脚。</p>
-<p>2、定位 <code>VCC</code></p>
-<p>将万用表调到直流<code>20V</code>，然后将黑表笔放到刚刚判断的<code>GND</code>引脚上，再用红表笔触碰其他三个焊接点进行测试。电压稳定在<code>3.3V或5V</code>左右的那个引脚即为<code>VCC</code>引脚。</p>
-<p>3、定位 <code>TXD</code></p>
-<p>开机会出现数据传输，如果该引脚出现了电压变化，则该引脚是<code>TXD</code>。黑表笔放到刚刚判断的<code>GND</code>引脚上，重启路由器，用红表笔触碰其他两个引脚，电压发生变化的即为<code>TDX</code>。</p>
-<p>4、定位 <code>RXD</code></p>
-<p>确定了其他三个引脚之后，剩下的一个即为<code>RDX</code>。</p>
-<h3 id="实操"><a href="#实操" class="headerlink" title="实操"></a>实操</h3><h4 id="焊接并连接-UART-串口"><a href="#焊接并连接-UART-串口" class="headerlink" title="焊接并连接 UART 串口"></a>焊接并连接 UART 串口</h4><p>下图可以看到四个孔处已经被读者用电烙铁焊上了几根针，可以便于我们用杜邦线将板子与<code>FT232</code>相连接。</p>
-<p><img src="/img/%E4%BB%8E%E8%B7%AF%E7%94%B1%E5%99%A8%E7%9C%9F%E6%9C%BA%E6%8F%90%E5%8F%96%E5%9B%BA%E4%BB%B6%E5%8C%85%EF%BC%88%E4%B8%80%EF%BC%89/2.png"></p>
-<p>之后，我们用杜邦线把板子和<code>FT232</code>的<code>GND</code>相连，把两者的<code>RXD</code>与<code>TXD</code>反着连。（也就是板子的<code>RXD</code>与<code>FT23的TXD</code>相连，板子的<code>TXD</code>与<code>FT23的RXD</code>相连）注意：在板子通电后最好不要将两者的<code>VCC</code>相连，否则可能损坏设备。</p>
-<h4 id="提取固件"><a href="#提取固件" class="headerlink" title="提取固件"></a>提取固件</h4><p>在连接好<code>FT232</code>与板子上的串口之后，我选择使用<code>SecureCRT</code>连接进shell。在这里我们可以看出想要进入shell，那么我们必须有登录名和密码。所以通过shell提取固件有一定的局限性。要么该设备不需要账号密码就能登陆，要么知道该设备登陆的账号和密码。</p>
-<p><img src="/img/%E4%BB%8E%E8%B7%AF%E7%94%B1%E5%99%A8%E7%9C%9F%E6%9C%BA%E6%8F%90%E5%8F%96%E5%9B%BA%E4%BB%B6%E5%8C%85%EF%BC%88%E4%B8%80%EF%BC%89/3.png"></p>
-<p><img src="/img/%E4%BB%8E%E8%B7%AF%E7%94%B1%E5%99%A8%E7%9C%9F%E6%9C%BA%E6%8F%90%E5%8F%96%E5%9B%BA%E4%BB%B6%E5%8C%85%EF%BC%88%E4%B8%80%EF%BC%89/4.png"></p>
-<p>登陆上之后用<code>tftp</code>或者<code>nc</code>等方法即可将固件传出来。</p>
 
       
     </div>
@@ -620,9 +633,15 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">13</span>
+          <span class="site-state-item-count">14</span>
           <span class="site-state-item-name">posts</span>
         </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
 </div>
