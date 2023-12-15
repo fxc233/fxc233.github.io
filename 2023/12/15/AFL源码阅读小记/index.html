@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.0.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"fxc233.github.io","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="afl-gccfind-as用来寻找as的路径。分别从环境变量AFL_PATH，afl-gcc的路径（如果是绝对路径或相对路径调用afl-gcc），&#x2F;usr&#x2F;local&#x2F;lib&#x2F;afl三个地方寻找。如果找不到则报出相应错误。下列是我调试时打印出来的参数。 123afl-gcc: find_asargv0: afl-gccAFL_PATH: &#x2F;usr&#x2F;loca">
+<meta property="og:type" content="article">
+<meta property="og:title" content="AFL源码阅读小记">
+<meta property="og:url" content="https://fxc233.github.io/2023/12/15/AFL%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E5%B0%8F%E8%AE%B0/index.html">
+<meta property="og:site_name" content="fxc233&#39;s blog">
+<meta property="og:description" content="afl-gccfind-as用来寻找as的路径。分别从环境变量AFL_PATH，afl-gcc的路径（如果是绝对路径或相对路径调用afl-gcc），&#x2F;usr&#x2F;local&#x2F;lib&#x2F;afl三个地方寻找。如果找不到则报出相应错误。下列是我调试时打印出来的参数。 123afl-gcc: find_asargv0: afl-gccAFL_PATH: &#x2F;usr&#x2F;loca">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2023-12-15T04:26:27.000Z">
+<meta property="article:modified_time" content="2023-12-15T04:44:05.715Z">
+<meta property="article:author" content="fxc233">
+<meta property="article:tag" content="fuzz">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://fxc233.github.io/2023/12/15/AFL%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E5%B0%8F%E8%AE%B0/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>AFL源码阅读小记 | fxc233's blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">fxc233's blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+  <a href="https://github.com/fxc233" class="github-corner" title="fxc233 GitHub" aria-label="fxc233 GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://fxc233.github.io/2023/12/15/AFL%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E5%B0%8F%E8%AE%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="fxc233">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="fxc233's blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          AFL源码阅读小记
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2023-12-15 12:26:27 / Modified: 12:44:05" itemprop="dateCreated datePublished" datetime="2023-12-15T12:26:27+08:00">2023-12-15</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="afl-gcc"><a href="#afl-gcc" class="headerlink" title="afl-gcc"></a>afl-gcc</h1><h2 id="find-as"><a href="#find-as" class="headerlink" title="find-as"></a>find-as</h2><p>用来寻找<strong>as</strong>的路径。分别从环境变量<strong>AFL_PATH</strong>，<strong>afl-gcc的路径（如果是绝对路径或相对路径调用afl-gcc）</strong>，&#x2F;usr&#x2F;local&#x2F;lib&#x2F;afl三个地方寻找。如果找不到则报出相应错误。下列是我调试时打印出来的参数。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">afl-gcc: find_as</span><br><span class="line">argv0: afl-gcc</span><br><span class="line">AFL_PATH: /usr/local/lib/afl</span><br></pre></td></tr></table></figure>
+
+<h2 id="edit-params"><a href="#edit-params" class="headerlink" title="edit_params"></a>edit_params</h2><p>用来对原生<strong>gcc</strong>进行一个封装，加上了一些参数并存放到<strong>cc_params</strong>中。如笔者使用<strong>afl-gcc -o test test.c</strong>对文件进行编译，则会被封装成如下代码。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">gcc</span><br><span class="line">-o</span><br><span class="line">test</span><br><span class="line">test.c</span><br><span class="line">-B</span><br><span class="line">/usr/local/lib/afl</span><br><span class="line">-g</span><br><span class="line">-O3</span><br><span class="line">-funroll-loops</span><br><span class="line">-D__AFL_COMPILER=1</span><br><span class="line">-DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION=1</span><br></pre></td></tr></table></figure>
+
+<h1 id="afl-as"><a href="#afl-as" class="headerlink" title="afl-as"></a>afl-as</h1><h2 id="edit-params-1"><a href="#edit-params-1" class="headerlink" title="edit_params"></a>edit_params</h2><p>对原生<strong>as</strong>进行封装，参数存放到<strong>as_params</strong>中。同时通过传入的参数设置一些变量的值，并且定义好<strong>modified_file</strong>。原本传入的命令和经过修改的命令如下。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">argv                          as_params</span><br><span class="line">/usr/local/lib/afl/as         as</span><br><span class="line">--64                          --64</span><br><span class="line">-o                            -o</span><br><span class="line">/tmp/cc6ribB2.o               /tmp/cc6ribB2.o</span><br><span class="line">/tmp/ccBeRi60.s               /tmp/.afl-165297-1701960501.s</span><br></pre></td></tr></table></figure>
+
+<p>最终主函数中也会运行这个命令。</p>
+<h2 id="add-instrumentation"><a href="#add-instrumentation" class="headerlink" title="add_instrumentation"></a>add_instrumentation</h2><p>尝试把<strong>input_file</strong>中的内容，进行插桩并放到<strong>modified_file</strong>中。打开文件后满足以下规则进行插桩。</p>
+<ul>
+<li>!pass_thru，不是用来传送数据</li>
+<li>!skip_intel，不是intel汇编</li>
+<li>!skip_app，不是__asm__内联汇编</li>
+<li>!skip_csect，不与当前架构不适配（比如在x64架构中遇到x86汇编）</li>
+<li>instr_ok，在text段中</li>
+<li>instrument_next，有时会把instrument_next置零使得不会进行插桩</li>
+<li>line[0] &#x3D;&#x3D; ‘\t’，此行开头要为<strong>\t</strong></li>
+<li>isalpha(line[1])，line[1]要是字母</li>
+</ul>
+<p>或者遇到跳转指令且不是<strong>jmp</strong>时，也会插桩。</p>
+<p>最后如果存在满足上述条件的地方，并进行了插桩，在最后则会根据架构插入<strong>main_payload_64或main_payload_32</strong>。</p>
+<p>总的来说就是遇到如下汇编时进行插桩。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">function:   ——  函数入口</span><br><span class="line">.L0         ——  GCC分支跳转标签</span><br><span class="line">.jnz fun    ——  条件跳转</span><br></pre></td></tr></table></figure>
+
+<h2 id="trampoline"><a href="#trampoline" class="headerlink" title="trampoline"></a>trampoline</h2><p>比如x64程序中插入的代码如下，会调用__afl_maybe_log，且<strong>rcx</strong>的值是一个不超过<strong>1&lt;&lt;16</strong>的随机数。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&quot;leaq -(128+24)(%%rsp), %%rsp\n&quot;</span><br><span class="line">&quot;movq %%rdx,  0(%%rsp)\n&quot;</span><br><span class="line">&quot;movq %%rcx,  8(%%rsp)\n&quot;</span><br><span class="line">&quot;movq %%rax, 16(%%rsp)\n&quot;</span><br><span class="line">&quot;movq $0x%08x, %%rcx\n&quot;</span><br><span class="line">&quot;call __afl_maybe_log\n&quot;</span><br><span class="line">&quot;movq 16(%%rsp), %%rax\n&quot;</span><br><span class="line">&quot;movq  8(%%rsp), %%rcx\n&quot;</span><br><span class="line">&quot;movq  0(%%rsp), %%rdx\n&quot;</span><br><span class="line">&quot;leaq (128+24)(%%rsp), %%rsp\n&quot;</span><br></pre></td></tr></table></figure>
+
+<h3 id="afl-maybe-log"><a href="#afl-maybe-log" class="headerlink" title="__afl_maybe_log"></a>__afl_maybe_log</h3><p>检查共享内存(__afl_area_ptr)是否已经被设置，如果没被设置就调用__afl_setup进行初始化，设置过就调用__afl_store。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&quot;  movq  __afl_area_ptr(%rip), %rdx\n&quot;</span><br><span class="line">&quot;  testq %rdx, %rdx\n&quot;</span><br><span class="line">&quot;  je    __afl_setup\n&quot;</span><br><span class="line">&quot;\n&quot;</span><br><span class="line">&quot;__afl_store:\n&quot;</span><br></pre></td></tr></table></figure>
+
+<h3 id="afl-setup"><a href="#afl-setup" class="headerlink" title="__afl_setup"></a>__afl_setup</h3><p>会检查__afl_setup_failure是否为0，也即检查之前__afl_setup是否调用失败，如果之前失败则跳转到__afl_return返回。否则再检查__afl_global_area_ptr是否为0，为0则跳转到__afl_setup_first进行初始化，否则把__afl_global_area_ptr赋值给__afl_area_ptr后，跳转到__afl_store。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">&quot;  cmpb $0, __afl_setup_failure(%rip)\n&quot;</span><br><span class="line">&quot;  jne __afl_return\n&quot;</span><br><span class="line">&quot;  movq  __afl_global_area_ptr(%rip), %rdx\n&quot;</span><br><span class="line">&quot;  testq %rdx, %rdx\n&quot;</span><br><span class="line">&quot;  je    __afl_setup_first\n&quot;</span><br><span class="line">&quot;  movq %rdx, __afl_area_ptr(%rip)\n&quot;</span><br><span class="line">&quot;  jmp  __afl_store\n&quot; </span><br></pre></td></tr></table></figure>
+
+<h3 id="afl-setup-first"><a href="#afl-setup-first" class="headerlink" title="__afl_setup_first"></a>__afl_setup_first</h3><p>用来保存寄存器并保证栈对齐。之后调用<strong>shmat</strong>获取共享内存地址存放到全局变量__afl_area_ptr及__afl_global_area_ptr中。执行完毕调用__afl_forkserver。</p>
+<h3 id="afl-forkserver"><a href="#afl-forkserver" class="headerlink" title="__afl_forkserver"></a>__afl_forkserver</h3><p>向管道中写入<strong>4字节</strong>，来通知<strong>fuzz</strong>我们<strong>fork-server</strong>已经准备好。写入失败则会调用__afl_fork_resume。成功则调用__afl_fork_wait_loop。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&quot;  pushq %rdx\n&quot;</span><br><span class="line">&quot;  pushq %rdx\n&quot;</span><br><span class="line">&quot;  movq $4, %rdx               /* length    */\n&quot;</span><br><span class="line">&quot;  leaq __afl_temp(%rip), %rsi /* data      */\n&quot;</span><br><span class="line">&quot;  movq $&quot; STRINGIFY((FORKSRV_FD + 1)) &quot;, %rdi       /* file desc */\n&quot;</span><br><span class="line">CALL_L64(&quot;write&quot;)</span><br><span class="line">&quot;  cmpq $4, %rax\n&quot;</span><br><span class="line">&quot;  jne  __afl_fork_resume\n&quot;</span><br><span class="line">&quot;\n&quot;</span><br><span class="line">&quot;__afl_fork_wait_loop:\n&quot;</span><br></pre></td></tr></table></figure>
+
+<h3 id="afl-fork-wait-loop"><a href="#afl-fork-wait-loop" class="headerlink" title="__afl_fork_wait_loop"></a>__afl_fork_wait_loop</h3><p>等待父进程从管道发送来的命令，并存放到__afl_temp中。读取失败则调用__afl_die，成功则调用<strong>fork</strong>。子进程中调用__afl_fork_resume，当前进程把子进程号记录到__afl_fork_pid后，再写入管道，并且等待子进程返回。等待子进程执行完毕，把子进程状态写入管道告知<strong>fuzz</strong>。再重新调用__afl_fork_wait_loop进行下一轮测试。</p>
+<h3 id="afl-fork-resume"><a href="#afl-fork-resume" class="headerlink" title="__afl_fork_resume"></a>__afl_fork_resume</h3><p>关闭管道描述符，恢复寄存器的值。调用__afl_store。</p>
+<h3 id="afl-die"><a href="#afl-die" class="headerlink" title="__afl_die"></a>__afl_die</h3><p>调用<strong>_exit</strong>。</p>
+<h3 id="afl-store"><a href="#afl-store" class="headerlink" title="__afl_store"></a>__afl_store</h3><p>用来计算边的命中次数，<strong>RCX</strong>即当前边的id。首先计算rcx和更新__afl_prev_loc 。</p>
+<ul>
+<li>rcx &#x3D; rcx ^ __afl_prev_loc</li>
+<li>__afl_prev_loc &#x3D; __afl_prev_loc ^ rcx</li>
+<li>__afl_prev_loc &#x3D; __afl_prev_loc &gt;&gt; 1</li>
+</ul>
+<p>之后把__afl_area_ptr[rcx]+1</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">#ifndef COVERAGE_ONLY</span><br><span class="line">  &quot;  xorq __afl_prev_loc(%rip), %rcx\n&quot;</span><br><span class="line">  &quot;  xorq %rcx, __afl_prev_loc(%rip)\n&quot;</span><br><span class="line">  &quot;  shrq $1, __afl_prev_loc(%rip)\n&quot;</span><br><span class="line">#endif /* ^!COVERAGE_ONLY */</span><br><span class="line">  &quot;\n&quot;</span><br><span class="line">#ifdef SKIP_COUNTS</span><br><span class="line">  &quot;  orb  $1, (%rdx, %rcx, 1)\n&quot;</span><br><span class="line">#else</span><br><span class="line">  &quot;  incb (%rdx, %rcx, 1)\n&quot;</span><br><span class="line">#endif /* ^SKIP_COUNTS */</span><br></pre></td></tr></table></figure>
+
+<h1 id="afl-fuzz"><a href="#afl-fuzz" class="headerlink" title="afl-fuzz"></a>afl-fuzz</h1><h2 id="setup-signal-handlers"><a href="#setup-signal-handlers" class="headerlink" title="setup_signal_handlers"></a>setup_signal_handlers</h2><p>注册必要的信号处理函数</p>
+<h2 id="check-asan-opts"><a href="#check-asan-opts" class="headerlink" title="check_asan_opts"></a>check_asan_opts</h2><p>读取环境变量<strong>ASAN_OPTIONS</strong>和<strong>MSAN_OPTIONS</strong>并进行检查。</p>
+<h2 id="fix-up-sync"><a href="#fix-up-sync" class="headerlink" title="fix_up_sync"></a>fix_up_sync</h2><p>如果存在-M或-S，更改out_dir和sync_id。</p>
+<h2 id="save-cmdline"><a href="#save-cmdline" class="headerlink" title="save_cmdline"></a>save_cmdline</h2><p>保存命令行参数到全局变量<strong>orig_cmdline</strong>中。</p>
+<h2 id="fix-up-banner"><a href="#fix-up-banner" class="headerlink" title="fix_up_banner"></a>fix_up_banner</h2><p>获取测试文件名</p>
+<h2 id="check-if-tty"><a href="#check-if-tty" class="headerlink" title="check_if_tty"></a>check_if_tty</h2><p>检查是否在<strong>tty</strong>中运行，并记录在<strong>not_on_tty</strong>里。</p>
+<h2 id="get-core-count"><a href="#get-core-count" class="headerlink" title="get_core_count"></a>get_core_count</h2><p>获取cpu的核心数</p>
+<h2 id="bind-to-free-cpu"><a href="#bind-to-free-cpu" class="headerlink" title="bind_to_free_cpu"></a>bind_to_free_cpu</h2><p>linux系统，如果存在空闲核心，就绑定到这个cpu上</p>
+<h2 id="check-crash-handling"><a href="#check-crash-handling" class="headerlink" title="check_crash_handling"></a>check_crash_handling</h2><p>检查crash的处理方式，执行<strong>echo core &gt;&#x2F;proc&#x2F;sys&#x2F;kernel&#x2F;core_pattern</strong>，以防存在延迟。</p>
+<h2 id="setup-post"><a href="#setup-post" class="headerlink" title="setup_post"></a>setup_post</h2><p>如果存在环境变量<strong>AFL_POST_LIBRARY</strong>，则会从其记录的动态链接库中获取函数<strong>afl_postprocess</strong>，并记录到全局函数指针<strong>post_handler</strong>中。这个函数指针会被<strong>common_fuzz_stuff</strong>调用，用来处理<strong>out_buf</strong>。</p>
+<h2 id="setup-shm"><a href="#setup-shm" class="headerlink" title="setup_shm"></a>setup_shm</h2><p>用来初始化共享内存，设置<strong>SHM_ENV_VAR</strong>，和初始化<strong>virgin_bits</strong>，<strong>virgin_tmout</strong>，<strong>virgin_crash</strong>。</p>
+<ul>
+<li>如果<strong>in_bitmap</strong>为空，就初始化<strong>virgin_bits</strong>，<strong>virgin_tmout</strong>，<strong>virgin_crash</strong>为<strong>\xff</strong>。</li>
+<li>shmget(IPC_PRIVATE, MAP_SIZE, IPC_CREAT | IPC_EXCL | 0600); 分配共享内存，并把id存到<strong>shm_id</strong>里。</li>
+<li>atexit(remove_shm); 注册处理函数在退出时删除共享内存。（这个atexit也就是ctf里所谓的“exit-hook”的一种。😀</li>
+<li>setenv(SHM_ENV_VAR, shm_str, 1); 如果不是<strong>dumb_mode</strong>，设置<strong>SHM_ENV_VAR</strong>为<strong>shm_str</strong>。</li>
+<li>trace_bits &#x3D; shmat(shm_id, NULL, 0); 启动对共享内存的访问。</li>
+</ul>
+<h2 id="init-count-class16"><a href="#init-count-class16" class="headerlink" title="init_count_class16"></a>init_count_class16</h2><p>初始化<strong>count_class_lookup16</strong>，目的是提高<strong>count_class_lookup8</strong>的效率。先看一下<strong>count_class_lookup8</strong>定义。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">const</span> u8 count_class_lookup8[<span class="number">256</span>] = &#123;</span><br><span class="line"></span><br><span class="line">  [<span class="number">0</span>]           = <span class="number">0</span>,</span><br><span class="line">  [<span class="number">1</span>]           = <span class="number">1</span>,</span><br><span class="line">  [<span class="number">2</span>]           = <span class="number">2</span>,</span><br><span class="line">  [<span class="number">3</span>]           = <span class="number">4</span>,</span><br><span class="line">  [<span class="number">4</span> ... <span class="number">7</span>]     = <span class="number">8</span>,</span><br><span class="line">  [<span class="number">8</span> ... <span class="number">15</span>]    = <span class="number">16</span>,</span><br><span class="line">  [<span class="number">16</span> ... <span class="number">31</span>]   = <span class="number">32</span>,</span><br><span class="line">  [<span class="number">32</span> ... <span class="number">127</span>]  = <span class="number">64</span>,</span><br><span class="line">  [<span class="number">128</span> ... <span class="number">255</span>] = <span class="number">128</span></span><br><span class="line"></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p><strong>count_class_lookup8</strong>用来对路径命中率做规整。比如有些时候<strong>A-&gt;B</strong>，出现了4次，有时候出现5次，这可能并不意味着出现新的路径。同时也为了减少因为命中次数不一样导致的区别。于是就定义了<strong>count_class_lookup8</strong>用来做一个规整。把<strong>4-7</strong>次都看作<strong>8</strong>次，以此类推。</p>
+<p>而<strong>AFL</strong>中进行规整的时候一次性读入2字节，于是出现了count_class_lookup16。</p>
+<h2 id="setup-dirs-fds"><a href="#setup-dirs-fds" class="headerlink" title="setup_dirs_fds"></a>setup_dirs_fds</h2><p>创建输出文件夹以及记录fd。</p>
+<h2 id="read-testcases"><a href="#read-testcases" class="headerlink" title="read_testcases"></a>read_testcases</h2><p>从输入文件夹里读取所有文件，并将其加入测试队列中。</p>
+<ul>
+<li>nl_cnt &#x3D; scandir(in_dir, &amp;nl, NULL, alphasort); 记录文件数量和信息</li>
+<li>通过循环遍历所有文件<ul>
+<li>通过文件属性，大小和名称过滤掉无效文件</li>
+<li>add_to_queue(fn, st.st_size, passed_det); 通过筛选，则加入测试队列</li>
+</ul>
+</li>
+</ul>
+<h2 id="add-to-queue"><a href="#add-to-queue" class="headerlink" title="add_to_queue"></a>add_to_queue</h2><p>增加测试样例到队列中。</p>
+<ul>
+<li>新建一个<strong>queue_entry</strong>结构体以记录<strong>test case</strong>。</li>
+<li>更新<strong>max_depth</strong></li>
+<li>如果<strong>queue_top</strong>存在，则<strong>queue_top-&gt;next &#x3D; q; queue_top &#x3D; q;<strong>，否则</strong>q_prev100 &#x3D; queue &#x3D; queue_top &#x3D; q;</strong></li>
+<li><strong>queued_paths</strong>和<strong>pending_not_fuzzed</strong>加1</li>
+<li>如果<strong>queued_paths % 100 &#x3D; 0</strong>，则<strong>q_prev100-&gt;next_100 &#x3D; q; q_prev100 &#x3D; q;</strong></li>
+<li>设置<strong>last_path_time &#x3D; get_cur_time();</strong></li>
+</ul>
+<h2 id="load-auto"><a href="#load-auto" class="headerlink" title="load_auto"></a>load_auto</h2><p>加载自动生成的提取出来的词典token。从目标文件中读取内容，如果满足要求则调用<strong>maybe_add_auto(tmp, len);</strong></p>
+<h2 id="maybe-add-auto"><a href="#maybe-add-auto" class="headerlink" title="maybe_add_auto"></a>maybe_add_auto</h2><ul>
+<li>遍历<strong>mem</strong>里的字节，当出现有字节和第一个字节相同时停止遍历。</li>
+<li>如果mem[0]&#x3D;&#x3D;mem[1]，则直接返回</li>
+<li>如果<strong>mem</strong>的长度为<strong>2</strong>，则将<strong>mem和interesting_16</strong>进行比较，出现相同则直接返回</li>
+<li>如果<strong>mem</strong>的长度为<strong>4</strong>，则将<strong>mem和interesting_32</strong>进行比较，出现相同则直接返回</li>
+<li>将<strong>mem和extras中现有的数据</strong>进行比较，如果出现与<strong>mem</strong>相同的片段则直接退出。</li>
+<li>设置auto_changed &#x3D; 1;</li>
+<li>遍历<strong>a_extras</strong>，出现相同则a_extras[i].hit_cnt++；，否则把<strong>mem</strong>加入<strong>a_extras</strong></li>
+</ul>
+<h2 id="pivot-inputs"><a href="#pivot-inputs" class="headerlink" title="pivot_inputs"></a>pivot_inputs</h2><p>为<strong>in_dir</strong>里的testcase在<strong>out_dir&#x2F;queue</strong>里创建<strong>hard link</strong>。遍历输入目录的所有文件名，判断是否符合命名规范，如果不符合则按照规范重新命名，之后创建硬链接。</p>
+<h2 id="load-extras"><a href="#load-extras" class="headerlink" title="load_extras"></a>load_extras</h2><p>如果指定了<strong>extras_dir</strong>，那么从<strong>extras_dir</strong>里读取数据到<strong>extras</strong>里，并按照大小排序。</p>
+<h2 id="find-timeout"><a href="#find-timeout" class="headerlink" title="find_timeout"></a>find_timeout</h2><p>没有指定<strong>timeout_given</strong>时进入这个函数，设置<strong>timeout_given</strong>。</p>
+<h2 id="detect-file-args"><a href="#detect-file-args" class="headerlink" title="detect_file_args"></a>detect_file_args</h2><p>识别命令行参数中是否含有**@@<strong>，如果存在则替换为</strong>out_dir&#x2F;.cur_input**。</p>
+<h2 id="setup-stdio-file"><a href="#setup-stdio-file" class="headerlink" title="setup_stdio_file"></a>setup_stdio_file</h2><p>如果没有指定<strong>out_file</strong>，那么删除旧的并创建新的<strong>out_dir&#x2F;.cur_input</strong>，并获取其fd存放到<strong>out_fd</strong>中。</p>
+<h2 id="check-binary"><a href="#check-binary" class="headerlink" title="check_binary"></a>check_binary</h2><p>检查目标文件是否存在以及确保他不是一个shell script。并检查是否是完整的elf文件以及是否被插桩。</p>
+<h2 id="get-cur-time"><a href="#get-cur-time" class="headerlink" title="get_cur_time"></a>get_cur_time</h2><p>毫秒级获取时间</p>
+<h2 id="perform-dry-run"><a href="#perform-dry-run" class="headerlink" title="perform_dry_run"></a>perform_dry_run</h2><p>执行测试用例，检查是否按照预期进行。</p>
+<ul>
+<li>获取环境变量<strong>AFL_SKIP_CRASHES</strong></li>
+<li>遍历queue<ul>
+<li>打开q-&gt;fname，并读取其内容。</li>
+<li>调用<strong>res &#x3D; calibrate_case(argv, q, use_mem, 0, 1);</strong></li>
+<li>如果stop_soon&#x3D;&#x3D;1，则直接返回。</li>
+<li>如果<strong>res</strong>为crash_mode或者FAULT_NOBITS，则打印提示。</li>
+<li>根据错误类型抛出不同异常。</li>
+<li>如果<strong>q-&gt;var_behavior</strong>为真，说明该测试样例多次运行所覆盖的路径不同。</li>
+</ul>
+</li>
+</ul>
+<h2 id="calibrate-case"><a href="#calibrate-case" class="headerlink" title="calibrate_case"></a>calibrate_case</h2><p>测试输入样例是否会触发异常，以及检测新发现的路径样例的行为是否可变。</p>
+<ul>
+<li>如果<strong>q-&gt;exec_cksum</strong>为0，代表这个测试样例第一次运行，把first_run置为1。</li>
+<li>保持原来的stage_cur、stage_max、stage_name。</li>
+<li>如果测试样例不是来自queue，则use_tmout增大，且q-&gt;cal_failed++;。</li>
+<li>设置stage_name &#x3D; “calibration”;，并且通过fast_cal来判断，stage_max是3还是CAL_CYCLES（默认8），即这个样例测试的次数。</li>
+<li>不是dumb mode，并且<strong>forkserver</strong>没有启动，则调用**init_forkserver(argv);**。</li>
+<li>如果不是第一次运行这个测试样例，则把<strong>trace_bits</strong>拷贝进<strong>first_trace</strong>。</li>
+<li>开始calibrate stage<ul>
+<li>如果不是第一次运行，在第一轮calibrate stage结束时，显示界面，展示执行结果。</li>
+<li>调用<strong>write_to_testcase(use_mem, q-&gt;len);<strong>，把测试内容记录到</strong>out_file</strong>中。</li>
+<li>调用<strong>run_target(argv, use_tmout);<strong>执行测试样例，结果保存在</strong>fault</strong>中。</li>
+<li>如果这是第一轮calibrate case，不是dumb mode，并且trace_bits没有记录到数据，则设置fault &#x3D; FAULT_NOINST，跳转到abort_calibration。</li>
+<li>通过<strong>hash32(trace_bits, MAP_SIZE, HASH_CONST);<strong>计算出</strong>cksum</strong>。</li>
+<li>如果<strong>q-&gt;exec_cksum !&#x3D; cksum</strong>，代表不是第一次运行，或者这个测试样例行为可变。<ul>
+<li>u8 hnb &#x3D; has_new_bits(virgin_bits);</li>
+<li>如果hnb &gt; new_bits，则new_bits &#x3D; hnb。</li>
+<li>如果q-&gt;exec_cksum不为0，则代表不是第一次运行。<ul>
+<li>如果var_bytes为空，并且first_trace[i] !&#x3D; trace_bits[i]，则设置var_bytes[i] &#x3D; 1，stage_max   &#x3D; CAL_CYCLES_LONG。</li>
+<li>var_detected &#x3D; 1;</li>
+</ul>
+</li>
+<li>否则，代表是第一次运行。<ul>
+<li>设置q-&gt;exec_cksum &#x3D; cksum;</li>
+<li>拷贝<strong>trace_bits</strong>进<strong>first_trace</strong></li>
+</ul>
+</li>
+</ul>
+</li>
+<li>计算时间和轮次，并计算一些信息</li>
+<li>如果new_bits &#x3D;&#x3D; 2 &amp;&amp; !q-&gt;has_new_cov，则设置q-&gt;has_new_cov &#x3D; 1，并且queued_with_cov++。</li>
+<li>如果var_detected为1，则当前测试用例行为可变。调用mark_as_variable(q)，并且queued_variable++。</li>
+<li>恢复stage值。</li>
+<li>如果不是第一次运行stage则调用show_stats，展示状态。</li>
+</ul>
+</li>
+</ul>
+<h2 id="init-forkserver"><a href="#init-forkserver" class="headerlink" title="init_forkserver"></a>init_forkserver</h2><p>初始化<strong>fork server</strong>。</p>
+<ul>
+<li>建立状态管道<strong>st_pipe</strong>和控制管道<strong>ctl_pipe</strong>。</li>
+<li>fork出子进程<ul>
+<li>把<strong>FORKSRV_FD</strong>重定向到<strong>ctl_pipe[0]<strong>，把</strong>FORKSRV_FD+1</strong>重定向到**st_pipe[1]**。</li>
+<li>关闭一些问价描述符。</li>
+<li>调用<strong>execv(target_path, argv)<strong>。这里会执行我们之前插桩的程序，第一次执行时，会调用</strong>__afl_fork_wait_loop</strong>，以充当<strong>fork server</strong>。</li>
+<li>如果失败，则*(u32*)trace_bits &#x3D; EXEC_FAIL_SIG。</li>
+</ul>
+</li>
+<li>父进程<ul>
+<li>关闭ctl_pipe[0]和st_pipe[1]。</li>
+<li>等待<strong>fork server</strong>启动。<ul>
+<li>能从**st_pipe[0]**读取到4字节即代表启动成功，超时则表示失败。</li>
+</ul>
+</li>
+<li>子进程异常处理</li>
+</ul>
+</li>
+</ul>
+<h2 id="has-new-bits"><a href="#has-new-bits" class="headerlink" title="has_new_bits"></a>has_new_bits</h2><p>用来检查是否出现新路径以及是否边的命中次数发生变化。</p>
+<ul>
+<li>初始化<strong>current</strong>为<strong>trace_bits</strong>，<strong>virgin</strong>为<strong>virgin_map</strong>，ret&#x3D;0。</li>
+<li>8字节一组遍历<strong>trace_bits</strong>。如果**(*(u32*)current)<strong>不为0，并且</strong>(*(u32*)current &amp; *(u32*)virgin)**不为0。则代表出现新的路径或者路径命中次数出现变化。<ul>
+<li>如果ret&lt;2。<ul>
+<li>如果存在**(cur[i] &amp;&amp; vir[i] &#x3D;&#x3D; 0xff)**，那么设置ret&#x3D;2，这代表出现新的路径。</li>
+</ul>
+</li>
+<li>*virgin &amp;&#x3D; ~*current;</li>
+</ul>
+</li>
+<li>如果ret存在，并且<strong>virgin_map &#x3D;&#x3D; virgin_bits</strong>，则设置bitmap_changed &#x3D; 1</li>
+<li>返回ret</li>
+</ul>
+<h2 id="count-bytes"><a href="#count-bytes" class="headerlink" title="count_bytes"></a>count_bytes</h2><p>统计非零字节数</p>
+<ul>
+<li>每4字节一组遍历mem，u32* ptr &#x3D; (u32*)mem，ret&#x3D;0.</li>
+<li>将ptr 与0xff，0xff00，0xff0000，0xff000000，分别相与，如果非零，则ret++。</li>
+<li>返回ret，表示非零字节数。</li>
+</ul>
+<h2 id="run-target"><a href="#run-target" class="headerlink" title="run_target"></a>run_target</h2><p>用来fork出子进程进行fuzz测试。</p>
+<ul>
+<li>首先清空<strong>trace_bits</strong>（记录路径的共享内存）。</li>
+<li>如果是dumb mode或者no_forkserver非零。<ul>
+<li>fork出一个子进程，在关闭一系列文件描述符后，去执行**execv(target_path, argv)**。</li>
+</ul>
+</li>
+<li>否则正常通过<strong>fork server</strong>来fork出一个进程进行fuzz。<ul>
+<li>通过<strong>fsrv_ctl_fd</strong>写入4字节，来告诉fork server要开始fuzz。</li>
+<li>再通过<strong>fsrv_st_fd</strong>读取4字节，判断fork server是否成功fork出子进程。</li>
+</ul>
+</li>
+<li>AFL自己会等待fork出来的程序执行结束，并获取状态保存到status中。total_execs++。</li>
+<li>调用classify_counts((u64*)trace_bits)。</li>
+<li>根据<strong>status</strong>的值，返回fuzz执行状态。</li>
+</ul>
+<h2 id="classify-counts-u64-mem"><a href="#classify-counts-u64-mem" class="headerlink" title="classify_counts(u64* mem)"></a>classify_counts(u64* mem)</h2><p>用来对<strong>trace_bits</strong>进行分类规整。</p>
+<ul>
+<li><p>8字节一组遍历<strong>trace_bits</strong>。</p>
+<ul>
+<li>每次2字节进行规整。</li>
+<li>代码如下</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">mem16[<span class="number">0</span>] = count_class_lookup16[mem16[<span class="number">0</span>]];</span><br><span class="line">mem16[<span class="number">1</span>] = count_class_lookup16[mem16[<span class="number">1</span>]];</span><br><span class="line">mem16[<span class="number">2</span>] = count_class_lookup16[mem16[<span class="number">2</span>]];</span><br><span class="line">mem16[<span class="number">3</span>] = count_class_lookup16[mem16[<span class="number">3</span>]];</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h2 id="update-bitmap-score"><a href="#update-bitmap-score" class="headerlink" title="update_bitmap_score"></a>update_bitmap_score</h2><p>当发现新的路径时，判断触发新的路径的样例是否更加favorable，favorable的意思是当前路径是否包含最小的路径集合来遍历到bitmap中的所有位。</p>
+<ul>
+<li>fav_factor &#x3D; q-&gt;exec_us * q-&gt;len。</li>
+<li>遍历trace_bits，如果trace_bits[i]存在，则代表这里所指的路径已被覆盖。<ul>
+<li>如果fav_factor &gt; top_rated[i]-&gt;exec_us * top_rated[i]-&gt;len，则代表原来的更优，直接continue，去判断下一条路径。</li>
+<li>否则就说明这个新样例对于当前边更加favorable，–top_rated[i]-&gt;tc_ref，top_rated[i]-&gt;trace_mini &#x3D; 0。</li>
+</ul>
+</li>
+<li>替换top_rated[i]，top_rated[i] &#x3D; q，并且q-&gt;tc_ref++。</li>
+<li>如果q-&gt;trace_mini&#x3D;&#x3D;0，则调用minimize_bits(q-&gt;trace_mini, trace_bits)。</li>
+<li>score_changed &#x3D; 1</li>
+</ul>
+<h2 id="minimize-bits"><a href="#minimize-bits" class="headerlink" title="minimize_bits"></a>minimize_bits</h2><p>将描述边是否被覆盖到的以字节记录的<strong>trace_bits</strong>，转化为以<strong>bit</strong>记录的图。</p>
+<h2 id="cull-queue"><a href="#cull-queue" class="headerlink" title="cull_queue"></a>cull_queue</h2><p>用来精简队列</p>
+<ul>
+<li>如果是dumb mode，或者score_changed&#x3D;&#x3D;0，那么就直接返回。</li>
+<li>设置score_changed&#x3D;0，初始化temp_v[MAP_SIZE &gt;&gt; 3]为0xff。</li>
+<li>遍历queue队列，使得q-&gt;favored &#x3D; 0。</li>
+<li>遍历<strong>top_rated</strong>次。<ul>
+<li>如果top_rated[i]存在，并且temp_v[i &gt;&gt; 3] &amp; (1 &lt;&lt; (i &amp; 7))存在。<ul>
+<li>从temp_v中清除掉top_rated[i]所有覆盖到的边。</li>
+<li>top_rated[i]-&gt;favored &#x3D; 1，queued_favored++。</li>
+<li>如果top_rated[i]-&gt;was_fuzzed&#x3D;&#x3D;0，则pending_favored++。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>遍历队列queue，调用mark_as_redundant(q, !q-&gt;favored)。</li>
+</ul>
+<h2 id="mark-as-redundant"><a href="#mark-as-redundant" class="headerlink" title="mark_as_redundant"></a>mark_as_redundant</h2><p>标记冗余队列。</p>
+<ul>
+<li>如果state &#x3D;&#x3D; q-&gt;fs_redundant，则直接返回。</li>
+<li>设置q-&gt;fs_redundant &#x3D; state。</li>
+<li>构造路径fn&#x3D;”out_dir&#x2F;queue&#x2F;.state&#x2F;redundant_edges&#x2F;q-&gt;fname”。</li>
+<li>对state进行判断。<ul>
+<li>state存在，则说明该队列冗余，创建文件fn。</li>
+<li>state为空，则删除文件。</li>
+</ul>
+</li>
+</ul>
+<h2 id="show-init-stats"><a href="#show-init-stats" class="headerlink" title="show_init_stats"></a>show_init_stats</h2><p>初始化之后，显示一些信息，以及设置一些值。</p>
+<h2 id="find-start-position"><a href="#find-start-position" class="headerlink" title="find_start_position"></a>find_start_position</h2><p>用来查询开始队列的位置。</p>
+<ul>
+<li>如果resuming_fuzz&#x3D;&#x3D;0，则直接退出。</li>
+<li>否则就找到fuzzer_stats文件，打开并找到cur_path，并设置为ret。</li>
+<li>如果ret &gt;&#x3D; queued_paths，则ret&#x3D;0，返回ret。</li>
+</ul>
+<h2 id="write-stats-file"><a href="#write-stats-file" class="headerlink" title="write_stats_file"></a>write_stats_file</h2><p>用来更新fuzzer_stats文件。</p>
+<h2 id="save-auto"><a href="#save-auto" class="headerlink" title="save_auto"></a>save_auto</h2><p>用来自动保存生成的extras。</p>
+<ul>
+<li>如果auto_changed&#x3D;&#x3D;0，则直接退出。</li>
+<li>打开”out_dir&#x2F;queue&#x2F;.state&#x2F;auto_extras&#x2F;auto_%06u”文件，并写入a_extras[i].data。</li>
+</ul>
+<h2 id="fuzz-主循环"><a href="#fuzz-主循环" class="headerlink" title="fuzz 主循环"></a>fuzz 主循环</h2><p>fuzz的过程</p>
+<ul>
+<li><p>调用**cull_queue()**，精简队列。</p>
+</li>
+<li><p>如果queue_cur&#x3D;&#x3D;0，代表所有queue已被执行过。</p>
+<ul>
+<li><p>有以下设置</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">queue_cycle++;</span><br><span class="line">current_entry     = <span class="number">0</span>;</span><br><span class="line">cur_skipped_paths = <span class="number">0</span>;</span><br><span class="line">queue_cur         = <span class="built_in">queue</span>;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>调用show_stats，刷新界面。</p>
+</li>
+</ul>
+</li>
+<li><p>执行**skipped_fuzz &#x3D; fuzz_one(use_argv)**。</p>
+</li>
+</ul>
+<h2 id="fuzz-one"><a href="#fuzz-one" class="headerlink" title="fuzz_one"></a>fuzz_one</h2><p>从queue中取出entry进行fuzz，成功返回0，否则返回1。</p>
+<ul>
+<li>如果<strong>pending_favored</strong>非0，并且当前queue已经被fuzz过，并且queue_cur-&gt;favored&#x3D;&#x3D;0，则有99%的概率直接返回1。</li>
+<li>如果<strong>pending_favored</strong>为0，并且不是dumb mode，并且queue_cur-&gt;favored&#x3D;&#x3D;0，queued_paths &gt; 10。<ul>
+<li>如果queue_cycle &gt; 1，并且queue没有被fuzz过，则有75%的概率直接返回1。</li>
+<li>如果queue已经被fuzz过，则有95%的概率直接返回1。</li>
+</ul>
+</li>
+<li>打开测试样例文件，并且设置len &#x3D; queue_cur-&gt;len，将文件映射到内存中，地址复制给orig_in，in_buf。</li>
+</ul>
+<p><strong>CALIBRATION阶段</strong></p>
+<ul>
+<li>如果queue_cur-&gt;cal_failed存在，并且queue_cur-&gt;cal_failed&lt;3，则再次调用calibrate_case(argv, queue_cur, in_buf, queue_cycle - 1, 0)。</li>
+</ul>
+<p><strong>TRIMMING阶段</strong></p>
+<ul>
+<li><p>如果不是dumb mode，并且queue没有被修剪过，则调用**trim_case(argv, queue_cur, in_buf)**。</p>
+</li>
+<li><p>len &#x3D; queue_cur-&gt;len，调用memcpy(out_buf, in_buf, len)。</p>
+</li>
+</ul>
+<p><strong>PERFORMANCE SCORE</strong>阶段</p>
+<ul>
+<li>perf_score &#x3D; calculate_score(queue_cur)。</li>
+<li>如果skip_deterministic存在，或者queue已经被fuzz过，或者queue_cur-&gt;passed_det存在，则跳转去havoc_stage。</li>
+</ul>
+<p><strong>SIMPLE BITFLIP</strong>阶段</p>
+<p>bit翻转策略。</p>
+<ul>
+<li><p>定义了如下宏，这个宏的作用是，翻转_ar的(_bf) &gt;&gt; 3偏移处字节的，第7-((_bf) &amp; 7)比特。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> FLIP_BIT(_ar, _b) do &#123; \</span></span><br><span class="line"><span class="meta">    u8* _arf = (u8*)(_ar); \</span></span><br><span class="line"><span class="meta">    u32 _bf = (_b); \</span></span><br><span class="line"><span class="meta">    _arf[(_bf) &gt;&gt; 3] ^= (128 &gt;&gt; ((_bf) &amp; 7)); \</span></span><br><span class="line"><span class="meta">  &#125; while (0)</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong>bitflip 1&#x2F;1</strong>阶段，逐步翻转每一个字节的每一比特，并且调用common_fuzz_stuff(argv, out_buf, len)，之后会恢复这个比特。</p>
+</li>
+<li><p>并且如果在<strong>bitflip 1&#x2F;1</strong>阶段，连续翻转几个字节时，路径覆盖与原路径不一样，并且这几个新覆盖的路径一样，则AFL猜测这几个字节为token，并调用maybe_add_auto(a_collect, a_len)。</p>
+</li>
+<li><p><strong>bitflip 2&#x2F;1</strong>阶段，连续翻转2bit。</p>
+</li>
+<li><p><strong>bitflip 4&#x2F;1</strong>阶段，连续翻转4bit。</p>
+</li>
+<li><p>生成<strong>Effector map</strong>。这个结构的作用是使得AFL对文件格式有一定的判断，从而提高效率。如果将某个字节完全反转，也不能导致路径发生变化，那么这个字节可能就是<strong>data</strong>，对fuzz来说意义不大，在<strong>Effector map</strong>中标记为0，表示该字节无效，在以后变异中跳过这些字节，以节省资源。</p>
+</li>
+<li><p><strong>bitflip 8&#x2F;8</strong>阶段，以字节为单位进行翻转。在满足不是dumb mode和len &gt;&#x3D; 128的条件下，计算cksum，如果cksum !&#x3D; queue_cur-&gt;exec_cksum，那么标记<strong>eff_map[EFF_APOS(stage_cur)] &#x3D; 1</strong>，即代表这个字节值得变异。</p>
+</li>
+<li><p><strong>bitflip 16&#x2F;8</strong>阶段，以2字节为单位进行翻转，但是会跳过eff_map[EFF_APOS(stage_cur)]为0的字节。</p>
+</li>
+<li><p><strong>bitflip 32&#x2F;8</strong>阶段，以2字节为单位进行翻转，同样会跳过eff_map[EFF_APOS(stage_cur)]为0的字节。</p>
+</li>
+</ul>
+<p><strong>ARITHMETIC INC&#x2F;DEC</strong>阶段</p>
+<p>byte加减法策略。</p>
+<ul>
+<li><strong>arith 8&#x2F;8</strong>阶段，每8个bit，进行加减运算。</li>
+<li><strong>arith 16&#x2F;8</strong>阶段，每16个bit，进行加减运算。</li>
+<li><strong>arith 32&#x2F;8</strong>阶段，每32个bit，进行加减运算。</li>
+<li>会跳过被eff_map认为无效的字段，以及跳过被变异过的测试样例。</li>
+</ul>
+<p><strong>INTERESTING VALUES</strong>阶段</p>
+<p>byte替换策略。</p>
+<ul>
+<li><strong>interest 8&#x2F;8</strong>，每8个bit进行替换。</li>
+<li><strong>interest 16&#x2F;8</strong>，每16个bit进行替换。</li>
+<li><strong>interest 32&#x2F;8</strong>，每32个bit进行替换。</li>
+<li>会跳过被eff_map认为无效的字段，以及跳过被变异过的测试样例。</li>
+</ul>
+<p><strong>DICTIONARY STUFF</strong>阶段</p>
+<p>替换或插入tokens。</p>
+<p><strong>RANDOM HAVOC</strong>阶段</p>
+<p>dumb fuzz，完全随机的变异。</p>
+<h2 id="sync-fuzzers"><a href="#sync-fuzzers" class="headerlink" title="sync_fuzzers"></a>sync_fuzzers</h2><p>读取其他fuzzer的测试样例，并进行测试，如果出现新路径，就保存到自己的queue文件夹里。</p>
+<h2 id="trim-case"><a href="#trim-case" class="headerlink" title="trim_case"></a>trim_case</h2><p>修剪测试样例。</p>
+<ul>
+<li><p>如果测试样例小于5，则直接返回。</p>
+</li>
+<li><p>计算len_p2，len_p2 &#x3D; next_p2(q-&gt;len)，remove_len&#x3D;1&#x2F;16 * len_p2 。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> u32 <span class="title function_">next_p2</span><span class="params">(u32 val)</span> &#123;</span><br><span class="line"></span><br><span class="line">  u32 ret = <span class="number">1</span>;</span><br><span class="line">  <span class="keyword">while</span> (val &gt; ret) ret &lt;&lt;= <span class="number">1</span>;</span><br><span class="line">  <span class="keyword">return</span> ret;</span><br><span class="line"></span><br><span class="line">&#125; </span><br></pre></td></tr></table></figure>
+</li>
+<li><p>进入循环，循环跳出条件是remove_len&lt; 1&#x2F;1024 * len_p2。</p>
+<ul>
+<li>跳过in_buf从remove_pos偏移处的trim_avail字节，写入到.cur_input中。</li>
+<li>调用**fault &#x3D; run_target(argv, exec_tmout)**，cksum &#x3D; hash32(trace_bits, MAP_SIZE, HASH_CONST)。</li>
+<li>如果cksum &#x3D;&#x3D; q-&gt;exec_cksum，就把原本测试样例中少去的这段给删除，实现了测试样例的简化。</li>
+<li>否则remove_pos +&#x3D; remove_len。</li>
+<li>show_stats（）</li>
+</ul>
+</li>
+<li><p>如果needs_write存在，则删除原测试样例，将简化后的测试样例写到同名文件中。</p>
+</li>
+<li><p>返回fault。</p>
+</li>
+</ul>
+<h2 id="calculate-score"><a href="#calculate-score" class="headerlink" title="calculate_score"></a>calculate_score</h2><p>根据速度，覆盖路径数，路径深度计算出一个得分，havoc变异阶段用。</p>
+<h2 id="common-fuzz-stuff"><a href="#common-fuzz-stuff" class="headerlink" title="common_fuzz_stuff"></a>common_fuzz_stuff</h2><p>写测试样例进文件并进行测试。</p>
+<ul>
+<li>如果<strong>post_handler</strong>存在，则先执行out_buf &#x3D; post_handler(out_buf, &amp;len)，对测试样例进行处理。</li>
+<li>调用write_to_testcase(out_buf, len)，写入.cur_input。</li>
+<li>调用fault &#x3D; run_target(argv, exec_tmout)。</li>
+<li>如果fault &#x3D;&#x3D; FAULT_TMOUT，返回1。</li>
+<li>调用queued_discovered +&#x3D; save_if_interesting(argv, out_buf, len, fault)。</li>
+<li>show_stats()。</li>
+<li>返回0。</li>
+</ul>
+<h2 id="write-to-testcase"><a href="#write-to-testcase" class="headerlink" title="write_to_testcase"></a>write_to_testcase</h2><p>从mem写len到.cur_input中。</p>
+<h2 id="save-if-interesting"><a href="#save-if-interesting" class="headerlink" title="save_if_interesting"></a>save_if_interesting</h2><p>如果这个测试样例很有趣就保存下来，保存就返回1，否则返回0.</p>
+<ul>
+<li>如果fault &#x3D;&#x3D; crash_mode，但是没有出现新路径并且路径命中次数相同，则直接返回0.</li>
+<li>调用add_to_queue(fn, len, 0)，添加新测试样例到队列中。</li>
+<li>调用queue_top-&gt;exec_cksum &#x3D; hash32(trace_bits, MAP_SIZE, HASH_CONST)。</li>
+<li>调用calibrate_case(argv, queue_top, mem, queue_cycle - 1, 0)评估queue。</li>
+<li>根据fault的值进行不同处理。</li>
+</ul>
+<h2 id="simplify-trace"><a href="#simplify-trace" class="headerlink" title="simplify_trace"></a>simplify_trace</h2><ul>
+<li><p>8字节一组，遍历trace_bits。</p>
+<ul>
+<li><p>如果mem不为空，mem8[i] &#x3D; simplify_lookup[mem8[i]]。</p>
+</li>
+<li><p>否则*mem &#x3D; 0x0101010101010101ULL，即代表这8个路径都没有命中。</p>
+</li>
+</ul>
+</li>
+</ul>
+<h1 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h1><p><a target="_blank" rel="noopener" href="https://eternalsakura13.com/2020/08/23/afl/">https://eternalsakura13.com/2020/08/23/afl/</a></p>
+<p><a target="_blank" rel="noopener" href="https://www.z1r0.top/2023/03/23/AFL-fuzz%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/#simplify-trace">https://www.z1r0.top/2023/03/23/AFL-fuzz%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/#simplify-trace</a></p>
+<p><a target="_blank" rel="noopener" href="https://forum.butian.net/share/2092">https://forum.butian.net/share/2092</a></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/fuzz/" rel="tag"># fuzz</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/12/02/docker%E5%B0%8F%E8%AE%B0/" rel="prev" title="docker小记">
+      <i class="fa fa-chevron-left"></i> docker小记
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#afl-gcc"><span class="nav-number">1.</span> <span class="nav-text">afl-gcc</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#find-as"><span class="nav-number">1.1.</span> <span class="nav-text">find-as</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#edit-params"><span class="nav-number">1.2.</span> <span class="nav-text">edit_params</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#afl-as"><span class="nav-number">2.</span> <span class="nav-text">afl-as</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#edit-params-1"><span class="nav-number">2.1.</span> <span class="nav-text">edit_params</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#add-instrumentation"><span class="nav-number">2.2.</span> <span class="nav-text">add_instrumentation</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#trampoline"><span class="nav-number">2.3.</span> <span class="nav-text">trampoline</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#afl-maybe-log"><span class="nav-number">2.3.1.</span> <span class="nav-text">__afl_maybe_log</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#afl-setup"><span class="nav-number">2.3.2.</span> <span class="nav-text">__afl_setup</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#afl-setup-first"><span class="nav-number">2.3.3.</span> <span class="nav-text">__afl_setup_first</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#afl-forkserver"><span class="nav-number">2.3.4.</span> <span class="nav-text">__afl_forkserver</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#afl-fork-wait-loop"><span class="nav-number">2.3.5.</span> <span class="nav-text">__afl_fork_wait_loop</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#afl-fork-resume"><span class="nav-number">2.3.6.</span> <span class="nav-text">__afl_fork_resume</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#afl-die"><span class="nav-number">2.3.7.</span> <span class="nav-text">__afl_die</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#afl-store"><span class="nav-number">2.3.8.</span> <span class="nav-text">__afl_store</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#afl-fuzz"><span class="nav-number">3.</span> <span class="nav-text">afl-fuzz</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#setup-signal-handlers"><span class="nav-number">3.1.</span> <span class="nav-text">setup_signal_handlers</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#check-asan-opts"><span class="nav-number">3.2.</span> <span class="nav-text">check_asan_opts</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#fix-up-sync"><span class="nav-number">3.3.</span> <span class="nav-text">fix_up_sync</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#save-cmdline"><span class="nav-number">3.4.</span> <span class="nav-text">save_cmdline</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#fix-up-banner"><span class="nav-number">3.5.</span> <span class="nav-text">fix_up_banner</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#check-if-tty"><span class="nav-number">3.6.</span> <span class="nav-text">check_if_tty</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#get-core-count"><span class="nav-number">3.7.</span> <span class="nav-text">get_core_count</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#bind-to-free-cpu"><span class="nav-number">3.8.</span> <span class="nav-text">bind_to_free_cpu</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#check-crash-handling"><span class="nav-number">3.9.</span> <span class="nav-text">check_crash_handling</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#setup-post"><span class="nav-number">3.10.</span> <span class="nav-text">setup_post</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#setup-shm"><span class="nav-number">3.11.</span> <span class="nav-text">setup_shm</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#init-count-class16"><span class="nav-number">3.12.</span> <span class="nav-text">init_count_class16</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#setup-dirs-fds"><span class="nav-number">3.13.</span> <span class="nav-text">setup_dirs_fds</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#read-testcases"><span class="nav-number">3.14.</span> <span class="nav-text">read_testcases</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#add-to-queue"><span class="nav-number">3.15.</span> <span class="nav-text">add_to_queue</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#load-auto"><span class="nav-number">3.16.</span> <span class="nav-text">load_auto</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#maybe-add-auto"><span class="nav-number">3.17.</span> <span class="nav-text">maybe_add_auto</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#pivot-inputs"><span class="nav-number">3.18.</span> <span class="nav-text">pivot_inputs</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#load-extras"><span class="nav-number">3.19.</span> <span class="nav-text">load_extras</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#find-timeout"><span class="nav-number">3.20.</span> <span class="nav-text">find_timeout</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#detect-file-args"><span class="nav-number">3.21.</span> <span class="nav-text">detect_file_args</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#setup-stdio-file"><span class="nav-number">3.22.</span> <span class="nav-text">setup_stdio_file</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#check-binary"><span class="nav-number">3.23.</span> <span class="nav-text">check_binary</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#get-cur-time"><span class="nav-number">3.24.</span> <span class="nav-text">get_cur_time</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#perform-dry-run"><span class="nav-number">3.25.</span> <span class="nav-text">perform_dry_run</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#calibrate-case"><span class="nav-number">3.26.</span> <span class="nav-text">calibrate_case</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#init-forkserver"><span class="nav-number">3.27.</span> <span class="nav-text">init_forkserver</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#has-new-bits"><span class="nav-number">3.28.</span> <span class="nav-text">has_new_bits</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#count-bytes"><span class="nav-number">3.29.</span> <span class="nav-text">count_bytes</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#run-target"><span class="nav-number">3.30.</span> <span class="nav-text">run_target</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#classify-counts-u64-mem"><span class="nav-number">3.31.</span> <span class="nav-text">classify_counts(u64* mem)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#update-bitmap-score"><span class="nav-number">3.32.</span> <span class="nav-text">update_bitmap_score</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#minimize-bits"><span class="nav-number">3.33.</span> <span class="nav-text">minimize_bits</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#cull-queue"><span class="nav-number">3.34.</span> <span class="nav-text">cull_queue</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#mark-as-redundant"><span class="nav-number">3.35.</span> <span class="nav-text">mark_as_redundant</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#show-init-stats"><span class="nav-number">3.36.</span> <span class="nav-text">show_init_stats</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#find-start-position"><span class="nav-number">3.37.</span> <span class="nav-text">find_start_position</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#write-stats-file"><span class="nav-number">3.38.</span> <span class="nav-text">write_stats_file</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#save-auto"><span class="nav-number">3.39.</span> <span class="nav-text">save_auto</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#fuzz-%E4%B8%BB%E5%BE%AA%E7%8E%AF"><span class="nav-number">3.40.</span> <span class="nav-text">fuzz 主循环</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#fuzz-one"><span class="nav-number">3.41.</span> <span class="nav-text">fuzz_one</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#sync-fuzzers"><span class="nav-number">3.42.</span> <span class="nav-text">sync_fuzzers</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#trim-case"><span class="nav-number">3.43.</span> <span class="nav-text">trim_case</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#calculate-score"><span class="nav-number">3.44.</span> <span class="nav-text">calculate_score</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#common-fuzz-stuff"><span class="nav-number">3.45.</span> <span class="nav-text">common_fuzz_stuff</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#write-to-testcase"><span class="nav-number">3.46.</span> <span class="nav-text">write_to_testcase</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#save-if-interesting"><span class="nav-number">3.47.</span> <span class="nav-text">save_if_interesting</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#simplify-trace"><span class="nav-number">3.48.</span> <span class="nav-text">simplify_trace</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E9%93%BE%E6%8E%A5"><span class="nav-number">4.</span> <span class="nav-text">参考链接</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">fxc233</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">15</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">fxc233</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

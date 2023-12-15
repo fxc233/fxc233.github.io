@@ -157,6 +157,92 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://fxc233.github.io/2023/11/06/%E4%BB%8E%E8%B7%AF%E7%94%B1%E5%99%A8%E7%9C%9F%E6%9C%BA%E6%8F%90%E5%8F%96%E5%9B%BA%E4%BB%B6%E5%8C%85%EF%BC%88%E4%BA%8C%EF%BC%89/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="fxc233">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="fxc233's blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/11/06/%E4%BB%8E%E8%B7%AF%E7%94%B1%E5%99%A8%E7%9C%9F%E6%9C%BA%E6%8F%90%E5%8F%96%E5%9B%BA%E4%BB%B6%E5%8C%85%EF%BC%88%E4%BA%8C%EF%BC%89/" class="post-title-link" itemprop="url">从路由器真机提取固件包（二）</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2023-11-06 14:20:17" itemprop="dateCreated datePublished" datetime="2023-11-06T14:20:17+08:00">2023-11-06</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2023-12-02 23:36:15" itemprop="dateModified" datetime="2023-12-02T23:36:15+08:00">2023-12-02</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>自写完 **<a target="_blank" rel="noopener" href="https://www.cnblogs.com/pwnfeifei/p/16926238.html">从路由器真机提取固件包（一）</a>**介绍如何通过 <strong>UART</strong>提取固件之后，一直没时间来写如何通过编程器提取固件。正好最近在看一款设备的时候，发现无法从官网下载到他的固件包，也无法通过串口拿到他的 shell，只能通过编程器提取他的固件。于是想起这篇算是鸽了很久的文章，现在来补写一下。</p>
+<h3 id="所用到的工具及设备"><a href="#所用到的工具及设备" class="headerlink" title="所用到的工具及设备"></a>所用到的工具及设备</h3><ul>
+<li>CH341A编程器</li>
+<li>转接板</li>
+<li>芯片夹</li>
+<li>xxx 路由器</li>
+<li>热风枪（x</li>
+</ul>
+<h3 id="前置知识"><a href="#前置知识" class="headerlink" title="前置知识"></a>前置知识</h3><h4 id="ROM芯片"><a href="#ROM芯片" class="headerlink" title="ROM芯片"></a>ROM芯片</h4><p>固件一般存储在ROM中，ROM是只读存储器（Read-Only Memory）的简称，是一种只能读出事先所存数据的固态半导体存储器。其特性是一旦储存资料就无法再将之改变或删除。通常用在不需经常变更资料的电子或电脑系统中，并且资料不会因为电源关闭而消失。</p>
+<h4 id="编程器"><a href="#编程器" class="headerlink" title="编程器"></a>编程器</h4><p>读取Flash芯片，需要借助编程器，编程器又称烧录器、写入器、写码器，是专门用来对IC芯片进行读写、编程&#x2F;烧录的仪器。本文会用 <strong>CH341A编程器</strong>读取此设备的固件。</p>
+<h4 id="编程器读取方式"><a href="#编程器读取方式" class="headerlink" title="编程器读取方式"></a>编程器读取方式</h4><p>（1）直接将导线连接到芯片的引脚，在通过导线连接编程器读取固件；<br>（2）把芯片拆下来，再连接编程器读取固件。</p>
+<h3 id="实操"><a href="#实操" class="headerlink" title="实操"></a>实操</h3><h4 id="找到flash并确定1号引脚"><a href="#找到flash并确定1号引脚" class="headerlink" title="找到flash并确定1号引脚"></a>找到flash并确定1号引脚</h4><p>值得一提的是，有些flash不在开发板正面，因此可稍作留意。例如上面两幅图中样机的flash便是在PCB背面。1号引脚附近应该会有小标记，如图这个便是有一个小三角指向1号引脚，及偏右下角的那个引脚。</p>
+<p><img src="/img/%E4%BB%8E%E8%B7%AF%E7%94%B1%E5%99%A8%E7%9C%9F%E6%9C%BA%E6%8F%90%E5%8F%96%E5%9B%BA%E4%BB%B6%E5%8C%85%EF%BC%88%E4%BA%8C%EF%BC%89/1.png"></p>
+<p><img src="/img/%E4%BB%8E%E8%B7%AF%E7%94%B1%E5%99%A8%E7%9C%9F%E6%9C%BA%E6%8F%90%E5%8F%96%E5%9B%BA%E4%BB%B6%E5%8C%85%EF%BC%88%E4%BA%8C%EF%BC%89/2.png"></p>
+<h4 id="组装芯片夹、转接板与编程器"><a href="#组装芯片夹、转接板与编程器" class="headerlink" title="组装芯片夹、转接板与编程器"></a>组装芯片夹、转接板与编程器</h4><p>我这里用的是 <strong>SOP8</strong>的芯片夹。与转接板连接时，红色的线对准1号位置。再按图中位置固定到编程器上。</p>
+<p><img src="/img/%E4%BB%8E%E8%B7%AF%E7%94%B1%E5%99%A8%E7%9C%9F%E6%9C%BA%E6%8F%90%E5%8F%96%E5%9B%BA%E4%BB%B6%E5%8C%85%EF%BC%88%E4%BA%8C%EF%BC%89/3.png"></p>
+<h4 id="提取固件"><a href="#提取固件" class="headerlink" title="提取固件"></a>提取固件</h4><p>最后把编程器插到电脑上，芯片夹夹住 <strong>flash</strong>即可（红线对准有标记的部分）。此时如果设备的电源灯亮，即说明已经正确连接。此时打开 <strong>CH341A</strong>编程器相对应的软件自动识别并提取固件即可，如果无法自动识别则可以通过 <strong>flash</strong>上印着的型号手动确定芯片类型即可。</p>
+<p><img src="/img/%E4%BB%8E%E8%B7%AF%E7%94%B1%E5%99%A8%E7%9C%9F%E6%9C%BA%E6%8F%90%E5%8F%96%E5%9B%BA%E4%BB%B6%E5%8C%85%EF%BC%88%E4%BA%8C%EF%BC%89/4.png"></p>
+<p><img src="/img/%E4%BB%8E%E8%B7%AF%E7%94%B1%E5%99%A8%E7%9C%9F%E6%9C%BA%E6%8F%90%E5%8F%96%E5%9B%BA%E4%BB%B6%E5%8C%85%EF%BC%88%E4%BA%8C%EF%BC%89/5.png"></p>
+<h3 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h3><p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/33527131">https://zhuanlan.zhihu.com/p/33527131</a></p>
+<p><a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s?__biz=MzUzNDYxOTA1NA==&mid=2247491223&idx=4&sn=39016ad70598e64c0a74b4bf08d223c9&chksm=fa90a856cde7214079b273bba8997e9c4cbabfde2fc1ff287fd6dd0d175223b3954fe37f9a88&scene=27">https://mp.weixin.qq.com/s?__biz=MzUzNDYxOTA1NA==&amp;mid=2247491223&amp;idx=4&amp;sn=39016ad70598e64c0a74b4bf08d223c9&amp;chksm=fa90a856cde7214079b273bba8997e9c4cbabfde2fc1ff287fd6dd0d175223b3954fe37f9a88&amp;scene=27</a></p>
+<p><a target="_blank" rel="noopener" href="https://blog.csdn.net/weixin_39224267/article/details/124661034">https://blog.csdn.net/weixin_39224267/article/details/124661034</a></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="https://fxc233.github.io/2023/11/06/%E4%BB%8E%E8%B7%AF%E7%94%B1%E5%99%A8%E7%9C%9F%E6%9C%BA%E6%8F%90%E5%8F%96%E5%9B%BA%E4%BB%B6%E5%8C%85%EF%BC%88%E4%B8%80%EF%BC%89/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -518,99 +604,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="https://fxc233.github.io/2023/11/06/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%BA%8C%E7%BB%93%E6%9D%9F/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="fxc233">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="fxc233's blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/11/06/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%BA%8C%E7%BB%93%E6%9D%9F/" class="post-title-link" itemprop="url">写在大二结束</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2023-11-06 14:14:04" itemprop="dateCreated datePublished" datetime="2023-11-06T14:14:04+08:00">2023-11-06</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2023-12-02 23:32:49" itemprop="dateModified" datetime="2023-12-02T23:32:49+08:00">2023-12-02</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>不知不觉一年又过去了，又到了写总结的时候。自从大一结束写了一篇名为**<a target="_blank" rel="noopener" href="https://www.cnblogs.com/pwnfeifei/p/16819275.html">写在大一结束</a><strong>的文章之后，我就在想当我写</strong>写在大二结束**时我的状态会是怎样的，会有什么样变化。不曾想过，时至今日笔者虽然感觉有很多话想说，有很多事都想记录下来，但是却突然又不知从何谈起。</p>
-<h3 id="文化课"><a href="#文化课" class="headerlink" title="文化课"></a>文化课</h3><p>看着这个小标题，突然不知该如何总结我大二这一年不尽人意的文化课结果(<del>虽然确实自己平时也没有好好听讲</del>)。总的来说是基本已经彻底和保研是彻底无缘了，考研的话基本上是不会去考虑了。不过好在每门也能勉强稳定在80分左右，并没有出现挂科的现象，这也许就是最大的幸运了，233。</p>
-<h3 id="CTF-RW"><a href="#CTF-RW" class="headerlink" title="CTF &amp; RW"></a>CTF &amp; RW</h3><p>由于没什么基础，感觉CTF这块一直没能打出什么好的成绩。面对师傅们出的各种各样的题，小弟我愈发感觉跟不上大师傅们的步伐。再加上搞实战的原因，也感觉自己与CTF越走越远。但是通过CTF，我认识了很多一样对CTF，对二进制安全感兴趣的师傅们，能与他们共同努力也是人生中一段精彩的旅程。此外，幸运的是，在大二这一学年的末尾，参加 <strong>XCTF-饶派杯车联网安全挑战赛</strong>时，在强力队友的带飞下，终于拿到了人生中第一个冠军。</p>
-<p>从大一下开始学习 <strong>IOT安全</strong>之后，一直把自己的重心放在漏洞挖掘这一块，偶尔心血来潮也会写一些轮子(<del>没啥用的轮子</del>)。也尝试写过 <strong>fuzz</strong>，不过经常在中途就感到自己这个fuzz是多么的辣鸡，于是它就夭折了。从挖一些简单洞，到逐渐可以获得一些中大型厂商的致谢，再到可以拿一些 <strong>bug bounty</strong>，确实会让自己产生一些小小的成就感，感觉有一点 <strong>nice</strong>。不过深知自己距离那些真正的大佬，仍然存在着遥不可及的距离。当然除了<strong>IOT</strong>，我也有着其他感兴趣的方向，如<strong>windows，浏览器</strong>等。所以，不出意外的话，从这学期开始，我会去尝试一些其他的方向，希望能有些不错的收获。也希望能在这个学年写出一个正常的 <strong>fuzz</strong>，能不能出 <strong>crash</strong>先不考虑，最起码能用起来。</p>
-<h3 id="暑期实习"><a href="#暑期实习" class="headerlink" title="暑期实习"></a>暑期实习</h3><p>由于没背过面经，基础也有些薄弱，面试时有些结巴，有些问题也答不上来，不过好在运气爆棚，获得了去长亭科技实习的机会。左边坐着某红队大佬，右边坐着我的 leader（exp师傅，真超级全能选手，啥都会的那种），夹在中间的我总显得格格不入。总的来说，长亭技术研究氛围确实超棒（<del>零食也很好吃</del>）。虽然仅在这里实习了短短两个月，却学到了很多东西，也有机会做了很多有意义的事。比如，成功挖到第一个大型工控系统的RCE，在天网杯中跟着大哥们挖到了自己第一个想挖了很久却一直没机会挖的打印机上的洞，也学到了和木马免杀有关的一些知识等等。再次给长亭的研究氛围点赞，如果你也对安全研究感兴趣，长亭科技绝对是一个很好的选择。</p>
-<h3 id="恋爱"><a href="#恋爱" class="headerlink" title="恋爱"></a>恋爱</h3><p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%BA%8C%E7%BB%93%E6%9D%9F/1.png"></p>
-<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%BA%8C%E7%BB%93%E6%9D%9F/2.png"></p>
-<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%BA%8C%E7%BB%93%E6%9D%9F/3.png"></p>
-<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%BA%8C%E7%BB%93%E6%9D%9F/4.png"></p>
-<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%BA%8C%E7%BB%93%E6%9D%9F/5.png"></p>
-<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%BA%8C%E7%BB%93%E6%9D%9F/6.png"></p>
-<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%BA%8C%E7%BB%93%E6%9D%9F/7.png"></p>
-<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%BA%8C%E7%BB%93%E6%9D%9F/8.png"></p>
-<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%BA%8C%E7%BB%93%E6%9D%9F/9.png"></p>
-<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%BA%8C%E7%BB%93%E6%9D%9F/10.png"></p>
-<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%BA%8C%E7%BB%93%E6%9D%9F/11.png"></p>
-<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%BA%8C%E7%BB%93%E6%9D%9F/12.png"></p>
-<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%BA%8C%E7%BB%93%E6%9D%9F/13.png"></p>
-<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%BA%8C%E7%BB%93%E6%9D%9F/14.png"></p>
-<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%BA%8C%E7%BB%93%E6%9D%9F/15.png"></p>
-<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%BA%8C%E7%BB%93%E6%9D%9F/16.png"></p>
-<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%BA%8C%E7%BB%93%E6%9D%9F/17.png"></p>
-<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%BA%8C%E7%BB%93%E6%9D%9F/18.png"></p>
-<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%BA%8C%E7%BB%93%E6%9D%9F/19.png"></p>
-<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%BA%8C%E7%BB%93%E6%9D%9F/20.png"></p>
-<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%BA%8C%E7%BB%93%E6%9D%9F/21.png"></p>
-<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%BA%8C%E7%BB%93%E6%9D%9F/22.png"></p>
-<p><img src="/img/%E5%86%99%E5%9C%A8%E5%A4%A7%E4%BA%8C%E7%BB%93%E6%9D%9F/23.png"></p>
-<h3 id="未来憧憬"><a href="#未来憧憬" class="headerlink" title="未来憧憬"></a>未来憧憬</h3><p>能和对象一直走下去，实现一个 <strong>fuzz</strong>，拿到更多的 <strong>bug bounty</strong>。。。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -680,14 +673,14 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">14</span>
+          <span class="site-state-item-count">15</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-count">7</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
