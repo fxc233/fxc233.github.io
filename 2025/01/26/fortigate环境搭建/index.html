@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.0.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"fxc233.github.io","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="逐步补上之前未记录的环境搭建过程（Fortigate 旧版">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Fortigate环境搭建">
+<meta property="og:url" content="https://fxc233.github.io/2025/01/26/fortigate%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/index.html">
+<meta property="og:site_name" content="fxc233&#39;s blog">
+<meta property="og:description" content="逐步补上之前未记录的环境搭建过程（Fortigate 旧版">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://fxc233.github.io/img/fortigate%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/1.png">
+<meta property="og:image" content="https://fxc233.github.io/img/fortigate%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/2.png">
+<meta property="og:image" content="https://fxc233.github.io/img/fortigate%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/3.png">
+<meta property="og:image" content="https://fxc233.github.io/img/fortigate%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/4.png">
+<meta property="og:image" content="https://fxc233.github.io/img/fortigate%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/5.png">
+<meta property="og:image" content="https://fxc233.github.io/img/fortigate%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/6.png">
+<meta property="og:image" content="https://fxc233.github.io/img/fortigate%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/7.png">
+<meta property="og:image" content="https://fxc233.github.io/img/fortigate%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/8.png">
+<meta property="og:image" content="https://fxc233.github.io/img/fortigate%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/9.png">
+<meta property="og:image" content="https://fxc233.github.io/img/fortigate%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/10.png">
+<meta property="og:image" content="https://fxc233.github.io/img/fortigate%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/11.png">
+<meta property="article:published_time" content="2025-01-26T13:56:46.000Z">
+<meta property="article:modified_time" content="2025-01-26T14:05:14.568Z">
+<meta property="article:author" content="fxc233">
+<meta property="article:tag" content="IOT">
+<meta property="article:tag" content="环境搭建">
+<meta property="article:tag" content="固件提取">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://fxc233.github.io/img/fortigate%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/1.png">
+
+<link rel="canonical" href="https://fxc233.github.io/2025/01/26/fortigate%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>Fortigate环境搭建 | fxc233's blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">fxc233's blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+  <a href="https://github.com/fxc233" class="github-corner" title="fxc233 GitHub" aria-label="fxc233 GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://fxc233.github.io/2025/01/26/fortigate%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="fxc233">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="fxc233's blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Fortigate环境搭建
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2025-01-26 21:56:46 / Modified: 22:05:14" itemprop="dateCreated datePublished" datetime="2025-01-26T21:56:46+08:00">2025-01-26</time>
+            </span>
+
+          
+            <div class="post-description">逐步补上之前未记录的环境搭建过程（Fortigate 旧版</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="Fortigate-环境搭建及固件提取"><a href="#Fortigate-环境搭建及固件提取" class="headerlink" title="Fortigate 环境搭建及固件提取"></a>Fortigate 环境搭建及固件提取</h1><h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>逐步补上之前未记录的环境搭建过程（Fortigate 旧版</p>
+<h2 id="环境搭建"><a href="#环境搭建" class="headerlink" title="环境搭建"></a>环境搭建</h2><p>首先下载fortigate的虚拟机镜像，解压缩之后，双击ovf之后即可用vmware打开，并把网络模式从桥接改为NAT。</p>
+<p>等待初始化完成之后，即可用admin+空密码登录。</p>
+<p><img src="/img/fortigate%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/1.png"></p>
+<p>使用如下命令配置网络</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">config system interface</span><br><span class="line">edit port1</span><br><span class="line">set mode static</span><br><span class="line">set ip 192.168.xxx.xxx/255.255.255.0</span><br><span class="line">set allowaccess ping ssh telnet http https</span><br><span class="line">end</span><br></pre></td></tr></table></figure>
+
+<p>配置好之后即可访问web界面，配置sslvpn并增加相应防火墙规则。</p>
+<p><img src="/img/fortigate%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/2.png"></p>
+<p><img src="/img/fortigate%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/3.png"></p>
+<p>配置完之后便可以访问到sslvpn登录界面。</p>
+<h2 id="固件提取"><a href="#固件提取" class="headerlink" title="固件提取"></a>固件提取</h2><p>在完成上述配置之后，关闭虚拟机，会看到虚拟机文件夹下有<strong>fortigate-7.2.1-disk1.vmdk</strong>。我们把它复制到其他目录下，并且挂载到其他虚拟机下，这里我直接挂载到了kali下。</p>
+<p><img src="/img/fortigate%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/4.png"></p>
+<p>内核文件是FORTIOS下的flatkc。主要文件系统市在FORTIOS下的rootfs.gz中。将它复制到其他文件夹下，使用下列命令对其进行解压。解压之后即可得到主要的文件系统。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">gzip -d rootfs.gz</span><br><span class="line">sudo cpio -idmv &lt; ./rootfs</span><br><span class="line">sudo chroot . /sbin/xz --check=sha256 -d /bin.tar.xz</span><br><span class="line">sudo chroot . /sbin/ftar -xf /bin.tar</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="后门植入"><a href="#后门植入" class="headerlink" title="后门植入"></a>后门植入</h2><h3 id="绕过文件系统检查"><a href="#绕过文件系统检查" class="headerlink" title="绕过文件系统检查"></a>绕过文件系统检查</h3><p>之前我们登陆后台拿到的是console shell。我们想要方便调试等操作，需要进行后门植入来获取正常的shell。想要进行后门植入，那么我们就得先了解一下有哪些文件检查。</p>
+<p>内核文件是flatkc。其中<strong>fgt_verify</strong>会进行文件系统hash的验证，验证成功则会启动 <strong>&#x2F;sbin&#x2F;init</strong>。</p>
+<p><img src="/img/fortigate%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/5.png"></p>
+<p><strong>&#x2F;sbin&#x2F;init</strong>的代码如下，首先检查文件系统，之后会对bin.tar.gz等文件进行解压，覆盖对应的目录，最后启动**&#x2F;bin&#x2F;init**。</p>
+<p><img src="/img/fortigate%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/6.png"></p>
+<p>最后我们看一下 <strong>&#x2F;bin&#x2F;init</strong>开始的几处校验。从上到下一共有四处，根据前人的<a target="_blank" rel="noopener" href="https://wzt.ac.cn/2023/03/02/fortigate_debug_env1/#%E6%A4%8D%E5%85%A5%E5%90%8E%E9%97%A8%E5%B9%B6%E5%90%AF%E5%8A%A8">文章</a>可以知道从上到下分别是：</p>
+<ul>
+<li>第一个判断函数内部执行了 ioctl 和 socket 等函数，向内核发送或接收某些信息。</li>
+<li>第二个检查&#x2F;.fgtsum来进行某些校验</li>
+<li>第三个和 FIPS 模式相关</li>
+<li>第四个实现对 rootfs.gz 的判断</li>
+</ul>
+<p>并且可以知道只要对第二个和第四个检查进行patch即可。</p>
+<p><img src="/img/fortigate%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/7.png"></p>
+<p>patch完如下。</p>
+<p><img src="/img/fortigate%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/8.png"></p>
+<p>所以我们想要植入后门，那么有一种方式如下。</p>
+<ul>
+<li>首先，patch &#x2F;bin&#x2F;init文件，跳过其中的校验逻辑。对rootfs.gz进行重打包，并对原文件进行替换。</li>
+<li>利用vmware的debugStub机制，调试内核，直接通过设置返回值跳过相关校验，并且把 &#x2F;sbin&#x2F;init改为 &#x2F;bin&#x2F;init来跳过 &#x2F;sbin&#x2F;init。</li>
+</ul>
+<h3 id="植入后门及后门使用"><a href="#植入后门及后门使用" class="headerlink" title="植入后门及后门使用"></a>植入后门及后门使用</h3><p>在命令行中执行<strong>diagnose hardware smartctl</strong>，系统会调用 <strong>&#x2F;bin&#x2F;smartctl</strong>。</p>
+<p>我们可以通过修改 <strong>&#x2F;bin&#x2F;smartctl</strong>为我们的后门二进制文件。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">shell</span><span class="params">()</span>&#123;</span><br><span class="line">        system(<span class="string">&quot;/bin/busybox ls&quot;</span>);</span><br><span class="line">        system(<span class="string">&quot;/bin/busybox id&quot;</span>);</span><br><span class="line">        system(<span class="string">&quot;/bin/busybox killall sshd &amp;&amp; /bin/busybox telnetd -l /bin/sh -b 0.0.0.0 -p 22&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">(<span class="type">int</span> argc, <span class="type">char</span> <span class="type">const</span> *argv[])</span></span><br><span class="line">&#123;</span><br><span class="line">        shell();</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//gcc -g smartctl.c -static -o smartctl</span></span><br></pre></td></tr></table></figure>
+
+
+
+<p>同时由于原本文件系统中命令很少，这里我们自己编译一个busybox。（编译时Settings —&gt; 选择[*] Build Busybox as a static binary并且去掉 Coreutils—&gt;sync 选项）</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo ln -sn /bin/busybox bin/sh</span><br></pre></td></tr></table></figure>
+
+<p>替换完之后进行重打包</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">find . | cpio -H newc -o &gt; ../rootfs.raw</span><br><span class="line">cat ../rootfs.raw | gzip &gt; ../rootfs.gz</span><br></pre></td></tr></table></figure>
+
+<p>对原来的vmdk里的rootfs.gz进行替换后即可重新开启虚拟机。之后在<strong>fortigate-7.2.1.vmx</strong>添加下列命令，即可利用debugStub进行内核调试。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">debugStub.listen.guest64 = &quot;TRUE&quot;</span><br><span class="line">debugStub.listen.guest64.remote = &quot;TRUE&quot;</span><br><span class="line">debugStub.port.guest64 = &quot;12345&quot;</span><br></pre></td></tr></table></figure>
+
+<p>patch完检查函数和启动文件之后即可进入正常的登录框。</p>
+<p><img src="/img/fortigate%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/9.png"></p>
+<p>输入指令<strong>diagnose hardware smartctl</strong>，调用我们的后门之后即可通过22端口拿到shell。</p>
+<p><img src="/img/fortigate%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/10.png"></p>
+<p><img src="/img/fortigate%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/11.png"></p>
+<h2 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h2><p><a target="_blank" rel="noopener" href="https://forum.butian.net/share/2166">https://forum.butian.net/share/2166</a></p>
+<p><a target="_blank" rel="noopener" href="https://wzt.ac.cn/2023/03/02/fortigate_debug_env1/#%E6%A4%8D%E5%85%A5%E5%90%8E%E9%97%A8%E5%B9%B6%E5%90%AF%E5%8A%A8">https://wzt.ac.cn/2023/03/02/fortigate_debug_env1/#%E6%A4%8D%E5%85%A5%E5%90%8E%E9%97%A8%E5%B9%B6%E5%90%AF%E5%8A%A8</a></p>
+<p><a target="_blank" rel="noopener" href="https://oraclepi.tech/post/PjuPrWzmI/">https://oraclepi.tech/post/PjuPrWzmI/</a></p>
+<p><a target="_blank" rel="noopener" href="https://ioo0s.art/2023/02/07/%E5%88%A9%E7%94%A8VMware%E8%8E%B7%E5%8F%96shell-%E8%BF%9B%E9%98%B6/">https://ioo0s.art/2023/02/07/%E5%88%A9%E7%94%A8VMware%E8%8E%B7%E5%8F%96shell-%E8%BF%9B%E9%98%B6/</a></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/IOT/" rel="tag"># IOT</a>
+              <a href="/tags/%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/" rel="tag"># 环境搭建</a>
+              <a href="/tags/%E5%9B%BA%E4%BB%B6%E6%8F%90%E5%8F%96/" rel="tag"># 固件提取</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2024/12/30/Draytek-CVE-2024-41592%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/" rel="prev" title="Draytek-CVE-2024-41592漏洞分析">
+      <i class="fa fa-chevron-left"></i> Draytek-CVE-2024-41592漏洞分析
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Fortigate-%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E5%8F%8A%E5%9B%BA%E4%BB%B6%E6%8F%90%E5%8F%96"><span class="nav-number">1.</span> <span class="nav-text">Fortigate 环境搭建及固件提取</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%89%8D%E8%A8%80"><span class="nav-number">1.1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA"><span class="nav-number">1.2.</span> <span class="nav-text">环境搭建</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%BA%E4%BB%B6%E6%8F%90%E5%8F%96"><span class="nav-number">1.3.</span> <span class="nav-text">固件提取</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%90%8E%E9%97%A8%E6%A4%8D%E5%85%A5"><span class="nav-number">1.4.</span> <span class="nav-text">后门植入</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BB%95%E8%BF%87%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F%E6%A3%80%E6%9F%A5"><span class="nav-number">1.4.1.</span> <span class="nav-text">绕过文件系统检查</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A4%8D%E5%85%A5%E5%90%8E%E9%97%A8%E5%8F%8A%E5%90%8E%E9%97%A8%E4%BD%BF%E7%94%A8"><span class="nav-number">1.4.2.</span> <span class="nav-text">植入后门及后门使用</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E9%93%BE%E6%8E%A5"><span class="nav-number">1.5.</span> <span class="nav-text">参考链接</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">fxc233</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">20</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">fxc233</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
